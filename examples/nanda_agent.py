@@ -50,6 +50,8 @@ def get_agent_config():
     capabilities = os.getenv("AGENT_CAPABILITIES", "general assistance,Ubuntu system administration,Python development,cloud deployment,agent-to-agent communication")
     registry_url = os.getenv("REGISTRY_URL", None)
     public_url = os.getenv("PUBLIC_URL", None)
+    service_charge = float(os.getenv("SERVICE_CHARGE", "0.0"))
+    enable_payments = os.getenv("ENABLE_PAYMENTS", "false").lower() == "true"
     
     # Parse capabilities into a list
     expertise_list = [cap.strip() for cap in capabilities.split(",")]
@@ -79,7 +81,9 @@ When someone asks about yourself, mention that you're part of the NANDA agent ne
         "public_url": public_url,
         "system_prompt": system_prompt,
         "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY"),
-        "model": "claude-3-haiku-20240307"  # Fast and cost-effective model
+        "model": "claude-3-haiku-20240307",  # Fast and cost-effective model
+        "service_charge": service_charge,
+        "enable_payments": enable_payments
     }
 
 # Load configuration
@@ -204,7 +208,9 @@ def main():
         port=PORT,
         registry_url=AGENT_CONFIG["registry_url"],
         public_url=AGENT_CONFIG["public_url"],
-        enable_telemetry=False
+        enable_telemetry=False,
+        service_charge=AGENT_CONFIG.get("service_charge", 0.0),
+        enable_payments=AGENT_CONFIG.get("enable_payments", False)
     )
     
     print(f"🚀 Agent URL: http://localhost:{PORT}/a2a")

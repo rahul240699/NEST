@@ -17,7 +17,9 @@ def read_requirements():
         "mcp",
         "python-dotenv",
         "flask-cors",
-        "psutil"  # For system monitoring
+        "psutil",  # For system monitoring
+        "aiohttp",  # For async HTTP requests in MCP client
+        "asyncio"  # For async operations in payment middleware
     ]
     return requirements
 

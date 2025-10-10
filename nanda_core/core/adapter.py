@@ -23,7 +23,9 @@ class NANDA:
                  registry_url: Optional[str] = None,
                  public_url: Optional[str] = None,
                  host: str = "0.0.0.0",
-                 enable_telemetry: bool = False):
+                 enable_telemetry: bool = False,
+                 service_charge: Optional[float] = None,
+                 enable_payments: bool = False):
         """
         Create a simple NANDA agent
         
@@ -35,6 +37,8 @@ class NANDA:
             public_url: Public URL for agent registration (e.g., https://yourdomain.com:6000)
             host: Host to bind to
             enable_telemetry: Enable telemetry logging (optional)
+            service_charge: Optional service charge for agent interactions
+            enable_payments: Enable payment middleware
         """
         self.agent_id = agent_id
         self.agent_logic = agent_logic
@@ -43,6 +47,8 @@ class NANDA:
         self.public_url = public_url
         self.host = host
         self.enable_telemetry = enable_telemetry
+        self.service_charge = service_charge
+        self.enable_payments = enable_payments
         
         # Initialize telemetry if enabled
         self.telemetry = None
@@ -54,12 +60,25 @@ class NANDA:
             except ImportError:
                 print(f"⚠️ Telemetry requested but module not available")
         
+        # Initialize payments middleware if enabled
+        self.payment_middleware = None
+        if enable_payments:
+            try:
+                from ..payments.payment_middleware import create_payment_middleware
+                from .registry_client import RegistryClient
+                registry_client = RegistryClient(registry_url) if registry_url else None
+                self.payment_middleware = create_payment_middleware(registry_client)
+                print(f"💰 Payment middleware enabled for {agent_id}")
+            except ImportError:
+                print(f"⚠️ Payment middleware requested but not available")
+
         # Create the bridge with optional features
         self.bridge = SimpleAgentBridge(
             agent_id=agent_id,
             agent_logic=agent_logic,
             registry_url=registry_url,
-            telemetry=self.telemetry
+            telemetry=self.telemetry,
+            payment_middleware=self.payment_middleware
         )
         
         print(f"🤖 NANDA Agent '{agent_id}' created")
@@ -86,9 +105,14 @@ class NANDA:
                 "agent_id": self.agent_id,
                 "agent_url": self.public_url
             }
+            if self.service_charge is not None:
+                data["service_charge"] = self.service_charge
+                
             response = requests.post(f"{self.registry_url}/register", json=data, timeout=10)
             if response.status_code == 200:
                 print(f"✅ Agent '{self.agent_id}' registered successfully")
+                if self.service_charge:
+                    print(f"💰 Service charge: ${self.service_charge}")
             else:
                 print(f"⚠️ Failed to register agent: HTTP {response.status_code}")
         except Exception as e:

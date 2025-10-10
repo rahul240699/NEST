@@ -23,12 +23,14 @@ class SimpleAgentBridge(A2AServer):
                  agent_id: str, 
                  agent_logic: Callable[[str, str], str],
                  registry_url: Optional[str] = None,
-                 telemetry = None):
+                 telemetry = None,
+                 payment_middleware = None):
         super().__init__()
         self.agent_id = agent_id
         self.agent_logic = agent_logic
         self.registry_url = registry_url
         self.telemetry = telemetry
+        self.payment_middleware = payment_middleware
         
     def handle_message(self, msg: Message) -> Message:
         """Handle incoming messages"""
@@ -49,16 +51,61 @@ class SimpleAgentBridge(A2AServer):
         
         logger.info(f"📨 [{self.agent_id}] Received: {user_text}")
         
+        # Extract receipt_id from message first (for both A2A and incoming messages)
+        receipt_id = None
+        original_text = user_text
+        
+        # Check for receipt in message
+        if self.payment_middleware:
+            receipt_id = self.payment_middleware.extract_receipt_from_message(user_text)
+            if receipt_id:
+                # Remove receipt from message text for processing
+                import re
+                user_text = re.sub(r'\s*#receipt:[a-zA-Z0-9\-]+', '', user_text).strip()
+
         # Handle different message types
         try:
             if user_text.startswith("@"):
-                # Agent-to-agent message (outgoing)
+                # Agent-to-agent message (outgoing) - payment logic handled in _handle_agent_message
                 return self._handle_agent_message(user_text, msg, conversation_id)
             elif user_text.startswith("/"):
                 # System command
                 return self._handle_command(user_text, msg, conversation_id)
             else:
-                # Regular message - use agent logic
+                # Incoming message - check payment requirements for THIS agent
+                if self.payment_middleware:
+                    # Check if THIS agent requires payment
+                    payment_req = self.payment_middleware.check_payment_requirement(self.agent_id)
+                    
+                    if payment_req.status.value == "required":  # Use .value to get enum value
+                        if not receipt_id:
+                            # No receipt provided - return 402 payment required
+                            return self._create_response(
+                                msg, conversation_id,
+                                f"402-PAYMENT-REQUIRED: This agent requires {payment_req.amount} NP per request. Please provide payment receipt."
+                            )
+                        else:
+                            # Receipt provided - validate it
+                            import asyncio
+                            try:
+                                payment_result = asyncio.get_event_loop().run_until_complete(
+                                    self.payment_middleware.validate_receipt(receipt_id)
+                                )
+                                if payment_result.status.value != "paid":  # Use .value to get enum value
+                                    return self._create_response(
+                                        msg, conversation_id,
+                                        f"402-PAYMENT-REQUIRED: Invalid receipt {receipt_id}. Please provide valid payment receipt."
+                                    )
+                                else:
+                                    print(f"💰 Payment validated for {self.agent_id}: {payment_result.message}")
+                            except Exception as e:
+                                logger.error(f"Payment validation error: {e}")
+                                return self._create_response(
+                                    msg, conversation_id,
+                                    f"❌ Payment validation error: {str(e)}"
+                                )
+                
+                # Process regular message - use agent logic
                 if self.telemetry:
                     self.telemetry.log_message_received(self.agent_id, conversation_id)
                 
@@ -165,7 +212,7 @@ class SimpleAgentBridge(A2AServer):
             )
     
     def _send_to_agent(self, target_agent_id: str, message_text: str, conversation_id: str) -> str:
-        """Send message to another agent"""
+        """Send message to another agent with payment handling"""
         try:
             # Look up agent URL
             agent_url = self._lookup_agent(target_agent_id)
@@ -177,6 +224,11 @@ class SimpleAgentBridge(A2AServer):
                 agent_url = f"{agent_url}/a2a"
             
             logger.info(f"📤 [{self.agent_id}] → [{target_agent_id}]: {message_text}")
+            
+            # Check if message already has receipt (for retry scenarios)
+            receipt_id = None
+            if self.payment_middleware:
+                receipt_id = self.payment_middleware.extract_receipt_from_message(message_text)
             
             # Create simple message with metadata
             simple_message = f"FROM: {self.agent_id}\nTO: {target_agent_id}\nMESSAGE: {message_text}"
@@ -204,11 +256,88 @@ class SimpleAgentBridge(A2AServer):
             if response:
                 if hasattr(response, 'parts') and response.parts:
                     response_text = response.parts[0].text
-                    logger.info(f"✅ [{self.agent_id}] Received response from {target_agent_id}: {response_text[:100]}...")
-                    return f"[{target_agent_id}] {response_text}"
+                elif hasattr(response, 'content') and hasattr(response.content, 'text'):
+                    response_text = response.content.text
                 else:
-                    logger.info(f"✅ [{self.agent_id}] Response has no parts, full response: {str(response)[:200]}...")
-                    return f"[{target_agent_id}] {str(response)}"
+                    response_text = str(response)
+                
+                logger.info(f"✅ [{self.agent_id}] Received response from {target_agent_id}: {response_text[:100]}...")
+                
+                # Check if response is a payment request (402)
+                if "402-PAYMENT-REQUIRED" in response_text and self.payment_middleware:
+                    logger.info(f"🔍 Detected 402 response: {response_text[:100]}...")
+                    
+                    # Extract amount from payment request
+                    import re
+                    amount_match = re.search(r'(\d+(?:\.\d+)?)\s*NP', response_text)
+                    if amount_match:
+                        amount = float(amount_match.group(1))
+                        logger.info(f"💰 Payment required: {amount} NP for {target_agent_id}")
+                        logger.info(f"🚀 Starting automatic payment processing...")
+                        
+                        # Automatically process payment
+                        try:
+                            import asyncio
+                            payment_result = asyncio.get_event_loop().run_until_complete(
+                                self.payment_middleware.process_payment(
+                                    self.agent_id, 
+                                    target_agent_id, 
+                                    int(amount)  # Convert to int for NP
+                                )
+                            )
+                            
+                            logger.info(f"💳 Payment result: {payment_result.status} - {payment_result.message}")
+                            
+                            if payment_result.status.value == "paid":  # Use .value for enum
+                                # Payment successful - retry request with receipt
+                                logger.info(f"✅ Payment processed: {payment_result.receipt_id}")
+                                
+                                # Retry with receipt in message
+                                retry_message = f"{message_text} #receipt:{payment_result.receipt_id}"
+                                retry_simple_message = f"FROM: {self.agent_id}\nTO: {target_agent_id}\nMESSAGE: {retry_message}"
+                                
+                                logger.info(f"🔄 Retrying request with receipt: {payment_result.receipt_id}")
+                                
+                                # Retry the request
+                                retry_response = client.send_message(
+                                    Message(
+                                        role=MessageRole.USER,
+                                        content=TextContent(text=retry_simple_message),
+                                        conversation_id=conversation_id,
+                                        metadata=Metadata(custom_fields={
+                                            'from_agent_id': self.agent_id,
+                                            'to_agent_id': target_agent_id,
+                                            'message_type': 'agent_to_agent_paid'
+                                        })
+                                    )
+                                )
+                                
+                                if retry_response:
+                                    if hasattr(retry_response, 'parts') and retry_response.parts:
+                                        retry_text = retry_response.parts[0].text
+                                    elif hasattr(retry_response, 'content') and hasattr(retry_response.content, 'text'):
+                                        retry_text = retry_response.content.text
+                                    else:
+                                        retry_text = str(retry_response)
+                                    
+                                    logger.info(f"✅ Retry successful: {retry_text[:100]}...")
+                                    return f"[{target_agent_id}] {retry_text}"
+                                else:
+                                    return f"[{self.agent_id}] Payment processed, message sent to {target_agent_id}"
+                            else:
+                                # Payment failed
+                                logger.error(f"❌ Payment failed: {payment_result.message}")
+                                return f"[{self.agent_id}] Payment failed: {payment_result.message}"
+                                
+                        except Exception as e:
+                            logger.error(f"❌ Error during payment processing: {e}")
+                            return f"[{self.agent_id}] Payment processing error: {str(e)}"
+                    else:
+                        logger.error(f"❌ Could not extract amount from payment request: {response_text}")
+                        return f"[{target_agent_id}] {response_text}"
+                else:
+                    # Normal response (not a payment request)
+                    return f"[{target_agent_id}] {response_text}"
             else:
                 logger.info(f"✅ [{self.agent_id}] Message delivered to {target_agent_id}, no response")
                 return f"Message sent to {target_agent_id}: {message_text}"

@@ -128,7 +128,7 @@ apt-get install -y python3 python3-venv python3-pip git curl
 
 # Setup project as ubuntu user
 cd /home/ubuntu
-sudo -u ubuntu git clone https://github.com/projnanda/NEST.git nanda-agent-$AGENT_ID
+sudo -u ubuntu git clone https://github.com/rahul240699/NEST.git nanda-agent-$AGENT_ID
 cd nanda-agent-$AGENT_ID
 
 # Create virtual environment and install
@@ -175,6 +175,8 @@ sudo -u ubuntu bash -c "
     export REGISTRY_URL='$REGISTRY_URL'
     export PUBLIC_URL='http://\$PUBLIC_IP:$PORT'
     export PORT='$PORT'
+    export SERVICE_CHARGE='$SERVICE_CHARGE'
+    export ENABLE_PAYMENTS='true'
     nohup python3 examples/nanda_agent.py > agent.log 2>&1 &
 "
 
