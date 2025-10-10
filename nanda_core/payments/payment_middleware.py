@@ -268,18 +268,18 @@ class PaymentMiddleware:
             )
         
         try:
-            # Ensure both agents have wallets first
-            if not await self.ensure_agent_wallet(source_agent_id):
-                return PaymentResult(
-                    status=PaymentStatus.PAYMENT_FAILED,
-                    message=f"Failed to setup wallet for sender: {source_agent_id}"
-                )
-            
-            if not await self.ensure_agent_wallet(target_agent_id):
-                return PaymentResult(
-                    status=PaymentStatus.PAYMENT_FAILED,
-                    message=f"Failed to setup wallet for recipient: {target_agent_id}"
-                )
+            # Let MCP server handle wallet management automatically
+            # if not await self.ensure_agent_wallet(source_agent_id):
+            #     return PaymentResult(
+            #         status=PaymentStatus.PAYMENT_FAILED,
+            #         message=f"Failed to setup wallet for sender: {source_agent_id}"
+            #     )
+            # 
+            # if not await self.ensure_agent_wallet(target_agent_id):
+            #     return PaymentResult(
+            #         status=PaymentStatus.PAYMENT_FAILED,
+            #         message=f"Failed to setup wallet for recipient: {target_agent_id}"
+            #     )
             
             client = MCPClient()
             
