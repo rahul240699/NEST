@@ -19,13 +19,14 @@ PORT="${9:-6000}"
 REGION="${10:-us-east-1}"
 INSTANCE_TYPE="${11:-t3.micro}"
 SERVICE_CHARGE="${12:-0.01}"
+MONGODB_URI="${13:-}"
 
 # Validate inputs
 if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || [ -z "$DOMAIN" ] || [ -z "$SPECIALIZATION" ] || [ -z "$DESCRIPTION" ] || [ -z "$CAPABILITIES" ]; then
-    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE] [SERVICE_CHARGE]"
+    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE] [SERVICE_CHARGE] [MONGODB_URI]"
     echo ""
     echo "Example:"
-    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" \"https://registry.example.com\" 6000 us-east-1 t3.micro 0.05"
+    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" \"https://registry.example.com\" 6000 us-east-1 t3.micro 0.05 \"mongodb+srv://user:pass@cluster.mongodb.net/\""
     echo ""
     echo "Parameters:"
     echo "  AGENT_ID: Unique identifier for the agent"
@@ -40,6 +41,7 @@ if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || 
     echo "  REGION: AWS region (default: us-east-1)"
     echo "  INSTANCE_TYPE: EC2 instance type (default: t3.micro)"
     echo "  SERVICE_CHARGE: Service charge in NP (default: 0.01)"
+    echo "  MONGODB_URI: MongoDB connection URI (optional, uses HTTP registry if not provided)"
     exit 1
 fi
 
@@ -186,11 +188,19 @@ sudo -u ubuntu bash -c "
     export PORT='$PORT'
     export SERVICE_CHARGE='${SERVICE_CHARGE:-0.01}'
     export ENABLE_PAYMENTS='true'
-    export USE_MONGODB_BACKEND='true'
-    export MONGODB_URI='mongodb+srv://user:user123@cluster0.svbpjtg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-    export MONGODB_DATABASE='nanda'
-    export MONGODB_COLLECTION='agents'
-    export MCP_COLLECTION='mcp_servers'
+    
+    # MongoDB configuration - only if URI provided
+    if [ -n '$MONGODB_URI' ]; then
+        export USE_MONGODB_BACKEND='true'
+        export MONGODB_URI='$MONGODB_URI'
+        export MONGODB_DATABASE='nanda'
+        export MONGODB_COLLECTION='agents'
+        export MCP_COLLECTION='mcp_servers'
+        echo 'Using MongoDB registry backend'
+    else
+        export USE_MONGODB_BACKEND='false'
+        echo 'Using HTTP registry backend'
+    fi
     nohup python3 examples/nanda_agent.py > agent.log 2>&1 &
 "
 
