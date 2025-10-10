@@ -110,6 +110,12 @@ class NANDA:
     def _register(self):
         """Register agent with registry"""
         try:
+            # Debug environment variables
+            print(f"🔍 Registration Debug Info:")
+            print(f"   USE_MONGODB_BACKEND: {os.getenv('USE_MONGODB_BACKEND')}")
+            print(f"   MONGODB_URI: {'SET' if os.getenv('MONGODB_URI') else 'NOT SET'}")
+            print(f"   Registry URL: {self.registry_url}")
+            
             from .registry_factory import create_registry_client
             registry_client = create_registry_client(self.registry_url)
             
@@ -132,12 +138,17 @@ class NANDA:
                 # Check if using MongoDB backend
                 if hasattr(registry_client, 'collection'):
                     print(f"🍃 Using MongoDB registry backend")
+                    print(f"   Database: {registry_client.database.name}")
+                    print(f"   Collection: {registry_client.collection.name}")
                 else:
                     print(f"🌐 Using HTTP registry backend")
+                    print(f"   Registry URL: {registry_client.registry_url}")
             else:
                 print(f"⚠️ Failed to register agent")
         except Exception as e:
             print(f"⚠️ Registration error: {e}")
+            import traceback
+            traceback.print_exc()
 
     def stop(self):
         """Stop the agent (placeholder for cleanup)"""

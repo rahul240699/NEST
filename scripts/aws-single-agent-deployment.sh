@@ -190,7 +190,7 @@ sudo -u ubuntu bash -c "
     export ENABLE_PAYMENTS='true'
     
     # MongoDB configuration - only if URI provided
-    if [ -n '$MONGODB_URI' ]; then
+    if [ -n \"$MONGODB_URI\" ]; then
         export USE_MONGODB_BACKEND='true'
         export MONGODB_URI='$MONGODB_URI'
         export MONGODB_DATABASE='nanda'

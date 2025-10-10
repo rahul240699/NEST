@@ -34,7 +34,15 @@ def create_registry_client(registry_url: Optional[str] = None,
     """
     # Determine which backend to use
     if use_mongodb is None:
-        use_mongodb = os.getenv("USE_MONGODB_BACKEND", "false").lower() == "true"
+        # Check multiple environment variables to determine if MongoDB should be used
+        mongodb_uri = os.getenv("MONGODB_URI", "").strip()
+        use_mongodb_env = os.getenv("USE_MONGODB_BACKEND", "false").lower() == "true"
+        
+        # Use MongoDB if explicitly enabled OR if MongoDB URI is provided
+        use_mongodb = use_mongodb_env or bool(mongodb_uri)
+        
+        if use_mongodb:
+            logger.info(f"🔍 MongoDB backend selected - USE_MONGODB_BACKEND: {use_mongodb_env}, MONGODB_URI: {'SET' if mongodb_uri else 'NOT SET'}")
     
     if use_mongodb:
         if not MONGODB_AVAILABLE:
