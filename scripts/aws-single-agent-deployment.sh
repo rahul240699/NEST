@@ -142,7 +142,7 @@ sudo -u ubuntu git checkout feature/payments
 
 # Create virtual environment and install
 sudo -u ubuntu python3 -m venv env
-sudo -u ubuntu bash -c "source env/bin/activate && pip install --upgrade pip && pip install -e . && pip install anthropic"
+sudo -u ubuntu bash -c "source env/bin/activate && pip install --upgrade pip && pip install -e . && pip install anthropic pymongo"
 
 # Configure the modular agent with all environment variables
 sudo -u ubuntu sed -i "s/PORT = 6000/PORT = $PORT/" examples/nanda_agent.py
@@ -186,6 +186,11 @@ sudo -u ubuntu bash -c "
     export PORT='$PORT'
     export SERVICE_CHARGE='${SERVICE_CHARGE:-0.01}'
     export ENABLE_PAYMENTS='true'
+    export USE_MONGODB_BACKEND='true'
+    export MONGODB_URI='mongodb+srv://user:user123@cluster0.svbpjtg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+    export MONGODB_DATABASE='nanda'
+    export MONGODB_COLLECTION='agents'
+    export MCP_COLLECTION='mcp_servers'
     nohup python3 examples/nanda_agent.py > agent.log 2>&1 &
 "
 

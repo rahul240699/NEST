@@ -9,9 +9,10 @@ import json
 import os
 from typing import Optional, Dict, List, Any
 from datetime import datetime
+from .abstract_registry_client import AbstractRegistryClient
 
 
-class RegistryClient:
+class RegistryClient(AbstractRegistryClient):
     """Client for interacting with the Nanda index registry"""
 
     def __init__(self, registry_url: Optional[str] = None):

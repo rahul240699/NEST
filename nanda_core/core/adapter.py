@@ -65,8 +65,8 @@ class NANDA:
         if enable_payments:
             try:
                 from ..payments.payment_middleware import create_payment_middleware
-                from .registry_client import RegistryClient
-                registry_client = RegistryClient(registry_url) if registry_url else None
+                from .registry_factory import create_registry_client
+                registry_client = create_registry_client(registry_url) if registry_url else None
                 self.payment_middleware = create_payment_middleware(registry_client)
                 print(f"💰 Payment middleware enabled for {agent_id}")
             except ImportError:

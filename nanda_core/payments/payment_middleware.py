@@ -24,7 +24,7 @@ except ImportError:
 
 # NEST adapter imports
 try:
-    from ..core.registry_client import RegistryClient
+    from ..core.abstract_registry_client import AbstractRegistryClient
     REGISTRY_AVAILABLE = True
 except ImportError:
     REGISTRY_AVAILABLE = False
@@ -63,12 +63,12 @@ class PaymentMiddleware:
     4. Return appropriate responses
     """
     
-    def __init__(self, registry_client: Optional[RegistryClient] = None, mcp_registry=None):
+    def __init__(self, registry_client: Optional[AbstractRegistryClient] = None, mcp_registry=None):
         """
         Initialize payment middleware.
         
         Args:
-            registry_client: NEST RegistryClient for agent lookup
+            registry_client: NEST AbstractRegistryClient for agent lookup
             mcp_registry: MCP registry for payment server access
         """
         self.registry_client = registry_client
@@ -289,12 +289,12 @@ class PaymentMiddleware:
 
 
 # Helper function to create payment middleware
-def create_payment_middleware(registry_client: Optional[RegistryClient] = None, mcp_registry=None):
+def create_payment_middleware(registry_client: Optional[AbstractRegistryClient] = None, mcp_registry=None):
     """
     Create payment middleware instance.
     
     Args:
-        registry_client: NEST RegistryClient instance
+        registry_client: NEST AbstractRegistryClient instance
         mcp_registry: MCP registry (optional)
         
     Returns:

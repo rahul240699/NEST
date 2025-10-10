@@ -19,7 +19,7 @@ def read_requirements():
         "flask-cors",
         "psutil",  # For system monitoring
         "aiohttp",  # For async HTTP requests in MCP client
-        "asyncio"  # For async operations in payment middleware
+        "pymongo"  # For MongoDB registry backend
     ]
     return requirements
 
