@@ -25,7 +25,10 @@ class NANDA:
                  host: str = "0.0.0.0",
                  enable_telemetry: bool = False,
                  service_charge: Optional[float] = None,
-                 enable_payments: bool = False):
+                 enable_payments: bool = False,
+                 agent_name: Optional[str] = None,
+                 description: Optional[str] = None,
+                 capabilities: Optional[list] = None):
         """
         Create a simple NANDA agent
         
@@ -39,6 +42,9 @@ class NANDA:
             enable_telemetry: Enable telemetry logging (optional)
             service_charge: Optional service charge for agent interactions
             enable_payments: Enable payment middleware
+            agent_name: Optional human-readable agent name
+            description: Optional agent description
+            capabilities: Optional list of agent capabilities
         """
         self.agent_id = agent_id
         self.agent_logic = agent_logic
@@ -49,6 +55,9 @@ class NANDA:
         self.enable_telemetry = enable_telemetry
         self.service_charge = service_charge
         self.enable_payments = enable_payments
+        self.agent_name = agent_name or agent_id
+        self.description = description or f"Agent {agent_id}"  
+        self.capabilities = capabilities or []
         
         # Initialize telemetry if enabled
         self.telemetry = None
@@ -101,20 +110,32 @@ class NANDA:
     def _register(self):
         """Register agent with registry"""
         try:
-            data = {
+            from .registry_factory import create_registry_client
+            registry_client = create_registry_client(self.registry_url)
+            
+            agent_data = {
                 "agent_id": self.agent_id,
-                "agent_url": self.public_url
+                "agent_url": self.public_url,
+                "agent_name": getattr(self, 'agent_name', self.agent_id),
+                "description": getattr(self, 'description', f"Agent {self.agent_id}"),
+                "capabilities": getattr(self, 'capabilities', []),
+                "status": "active"
             }
             if self.service_charge is not None:
-                data["service_charge"] = self.service_charge
+                agent_data["service_charge"] = self.service_charge
                 
-            response = requests.post(f"{self.registry_url}/register", json=data, timeout=10)
-            if response.status_code == 200:
+            success = registry_client.register_agent(self.agent_id, agent_data)
+            if success:
                 print(f"✅ Agent '{self.agent_id}' registered successfully")
                 if self.service_charge:
-                    print(f"💰 Service charge: ${self.service_charge}")
+                    print(f"💰 Service charge: {self.service_charge} NP")
+                # Check if using MongoDB backend
+                if hasattr(registry_client, 'collection'):
+                    print(f"🍃 Using MongoDB registry backend")
+                else:
+                    print(f"🌐 Using HTTP registry backend")
             else:
-                print(f"⚠️ Failed to register agent: HTTP {response.status_code}")
+                print(f"⚠️ Failed to register agent")
         except Exception as e:
             print(f"⚠️ Registration error: {e}")
 

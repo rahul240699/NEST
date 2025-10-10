@@ -212,7 +212,10 @@ def main():
         public_url=AGENT_CONFIG["public_url"],
         enable_telemetry=False,
         service_charge=AGENT_CONFIG.get("service_charge", 0.0),
-        enable_payments=AGENT_CONFIG.get("enable_payments", False)
+        enable_payments=AGENT_CONFIG.get("enable_payments", False),
+        agent_name=AGENT_CONFIG.get("agent_name"),
+        description=AGENT_CONFIG.get("description"),
+        capabilities=AGENT_CONFIG.get("expertise", [])
     )
     
     print(f"🚀 Agent URL: http://localhost:{PORT}/a2a")
@@ -270,7 +273,10 @@ When someone asks about yourself, mention that you're part of the NANDA agent ne
         agent_logic=agent_logic,
         port=port,
         registry_url=custom_config["registry_url"],
-        enable_telemetry=False
+        enable_telemetry=False,
+        agent_name=custom_config.get("agent_name"),
+        description=custom_config.get("description"),
+        capabilities=custom_config.get("expertise", [])
     )
     
     print(f"🤖 Starting custom LLM agent: {agent_name}")
