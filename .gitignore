@@ -82,3 +82,5 @@ out.log
 *.tmp
 *.temp
 .cache/
+
+test*

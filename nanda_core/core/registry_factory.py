@@ -46,19 +46,21 @@ def create_registry_client(registry_url: Optional[str] = None,
     
     if use_mongodb:
         if not MONGODB_AVAILABLE:
-            logger.warning("⚠️ MongoDB backend requested but pymongo not available. Install with: pip install pymongo")
-            logger.info("🔄 Falling back to HTTP registry client")
+            print("⚠️ MongoDB backend requested but pymongo not available. Install with: pip install pymongo")
+            print("🔄 Falling back to HTTP registry client")
             return RegistryClient(registry_url)
         
         try:
-            logger.info("🍃 Using MongoDB registry backend")
+            print("🍃 Using MongoDB registry backend")
+            print(f"   MongoDB URI: {os.getenv('MONGODB_URI', 'NOT SET')[:50]}...")
             return MongoDBRegistryClient()
         except Exception as e:
-            logger.error(f"❌ Failed to create MongoDB registry client: {e}")
-            logger.info("🔄 Falling back to HTTP registry client")
+            print(f"❌ Failed to create MongoDB registry client: {e}")
+            print("🔄 Falling back to HTTP registry client")
             return RegistryClient(registry_url)
     else:
-        logger.info("🌐 Using HTTP registry backend")
+        print("🌐 Using HTTP registry backend")
+        print(f"   Registry URL: {registry_url}")
         return RegistryClient(registry_url)
 
 

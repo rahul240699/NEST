@@ -117,7 +117,14 @@ class NANDA:
             print(f"   Registry URL: {self.registry_url}")
             
             from .registry_factory import create_registry_client
-            registry_client = create_registry_client(self.registry_url)
+            
+            # Force MongoDB backend if MongoDB URI is available
+            mongodb_uri = os.getenv('MONGODB_URI', '').strip()
+            if mongodb_uri:
+                print(f"🍃 FORCING MongoDB backend due to MONGODB_URI being set")
+                registry_client = create_registry_client(self.registry_url, use_mongodb=True)
+            else:
+                registry_client = create_registry_client(self.registry_url)
             
             agent_data = {
                 "agent_id": self.agent_id,
@@ -136,13 +143,13 @@ class NANDA:
                 if self.service_charge:
                     print(f"💰 Service charge: {self.service_charge} NP")
                 # Check if using MongoDB backend
-                if hasattr(registry_client, 'collection'):
+                if hasattr(registry_client, 'agents_collection'):
                     print(f"🍃 Using MongoDB registry backend")
-                    print(f"   Database: {registry_client.database.name}")
-                    print(f"   Collection: {registry_client.collection.name}")
+                    print(f"   Database: {registry_client.db.name}")
+                    print(f"   Collection: {registry_client.agents_collection.name}")
                 else:
                     print(f"🌐 Using HTTP registry backend")
-                    print(f"   Registry URL: {registry_client.registry_url}")
+                    print(f"   Registry URL: {getattr(registry_client, 'registry_url', 'N/A')}")
             else:
                 print(f"⚠️ Failed to register agent")
         except Exception as e:

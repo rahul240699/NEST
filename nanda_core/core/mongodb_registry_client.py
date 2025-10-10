@@ -49,7 +49,20 @@ class MongoDBRegistryClient(AbstractRegistryClient):
         
         # Initialize MongoDB client
         try:
-            self.client = MongoClient(self.mongodb_uri)
+            # Add SSL configuration for MongoDB Atlas
+            if "mongodb+srv://" in self.mongodb_uri:
+                # For MongoDB Atlas, use SSL with certificate verification
+                self.client = MongoClient(
+                    self.mongodb_uri,
+                    tls=True,
+                    tlsAllowInvalidCertificates=True,  # Allow self-signed certificates for development
+                    serverSelectionTimeoutMS=5000,
+                    connectTimeoutMS=5000,
+                    socketTimeoutMS=5000
+                )
+            else:
+                self.client = MongoClient(self.mongodb_uri)
+                
             self.db = self.client[self.database_name]
             self.agents_collection = self.db[self.agents_collection_name]
             self.mcp_collection = self.db[self.mcp_collection_name]
@@ -62,22 +75,35 @@ class MongoDBRegistryClient(AbstractRegistryClient):
             logger.error(f"❌ Failed to connect to MongoDB: {e}")
             raise
     
-    def register_agent(self, agent_id: str, agent_url: str, api_url: Optional[str] = None, 
+    def register_agent(self, agent_id: str, agent_data_or_url, api_url: Optional[str] = None, 
                       agent_facts_url: Optional[str] = None, service_charge: Optional[float] = None) -> bool:
-        """Register an agent with MongoDB"""
+        """Register an agent with MongoDB - supports both dict data and individual params"""
         try:
-            agent_doc = {
-                "agent_id": agent_id,
-                "agent_url": agent_url,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-                "status": "active"
-            }
-            
-            if api_url:
-                agent_doc["api_url"] = api_url
-            if agent_facts_url:
-                agent_doc["agent_facts_url"] = agent_facts_url
+            # Handle both calling patterns
+            if isinstance(agent_data_or_url, dict):
+                # Called from adapter with full agent data
+                agent_doc = agent_data_or_url.copy()
+                agent_doc.update({
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                })
+                # Ensure required fields
+                if "status" not in agent_doc:
+                    agent_doc["status"] = "active"
+            else:
+                # Called with individual parameters
+                agent_doc = {
+                    "agent_id": agent_id,
+                    "agent_url": agent_data_or_url,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                    "status": "active"
+                }
+                
+                if api_url:
+                    agent_doc["api_url"] = api_url
+                if agent_facts_url:
+                    agent_doc["agent_facts_url"] = agent_facts_url
             if service_charge is not None:
                 agent_doc["service_charge"] = service_charge
             
