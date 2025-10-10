@@ -126,19 +126,16 @@ class SimpleAgentBridge(A2AServer):
                         # No receipt provided - return 402 payment required
                         return self._create_response(
                             msg, conversation_id,
-                            f"[payment-client-agent-v2-1b4dab] 402-PAYMENT-REQUIRED: This agent requires {payment_req.amount} NP per request. Please provide payment receipt."
+                            f"402-PAYMENT-REQUIRED: This agent requires {payment_req.amount} NP per request. Please provide payment receipt."
                         )
                     else:
-                        # Receipt provided - validate it
-                        import asyncio
+                        # Receipt provided - validate it using sync wrapper
                         try:
-                            payment_result = asyncio.get_event_loop().run_until_complete(
-                                self.payment_middleware.validate_receipt(receipt_id)
-                            )
+                            payment_result = self.payment_middleware.validate_receipt_sync(receipt_id)
                             if payment_result.status.value != "paid":  # Use .value to get enum value
                                 return self._create_response(
                                     msg, conversation_id,
-                                    f"[payment-client-agent-v2-1b4dab] 402-PAYMENT-REQUIRED: Invalid receipt {receipt_id}. Please provide valid payment receipt."
+                                    f"402-PAYMENT-REQUIRED: Invalid receipt {receipt_id}. Please provide valid payment receipt."
                                 )
                             else:
                                 logger.info(f"💰 Payment validated for {self.agent_id}: {payment_result.message}")
@@ -149,7 +146,7 @@ class SimpleAgentBridge(A2AServer):
                             logger.error(f"Payment validation error: {e}")
                             return self._create_response(
                                 msg, conversation_id,
-                                f"[payment-client-agent-v2-1b4dab] ❌ Payment validation error: {str(e)}"
+                                f"❌ Payment validation error: {str(e)}"
                             )
             
             # Process the message through our agent logic
@@ -282,15 +279,12 @@ class SimpleAgentBridge(A2AServer):
                         logger.info(f"💰 Payment required: {amount} NP for {target_agent_id}")
                         logger.info(f"🚀 Starting automatic payment processing...")
                         
-                        # Automatically process payment
+                        # Automatically process payment using sync wrapper
                         try:
-                            import asyncio
-                            payment_result = asyncio.get_event_loop().run_until_complete(
-                                self.payment_middleware.process_payment(
-                                    self.agent_id, 
-                                    target_agent_id, 
-                                    int(amount)  # Convert to int for NP
-                                )
+                            payment_result = self.payment_middleware.process_payment_sync(
+                                self.agent_id, 
+                                target_agent_id, 
+                                int(amount)  # Convert to int for NP
                             )
                             
                             logger.info(f"💳 Payment result: {payment_result.status} - {payment_result.message}")

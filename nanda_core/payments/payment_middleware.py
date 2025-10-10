@@ -177,6 +177,70 @@ class PaymentMiddleware:
             print(f"Error ensuring wallet for {agent_name}: {e}")
             return False
 
+    def process_payment_sync(self, source_agent_id: str, target_agent_id: str, amount: int) -> PaymentResult:
+        """
+        Synchronous wrapper for payment processing - keeps agent bridge code simple
+        """
+        import asyncio
+        import threading
+        
+        def run_async_payment():
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(
+                    self.process_payment(source_agent_id, target_agent_id, amount)
+                )
+            finally:
+                loop.close()
+        
+        # Run in separate thread to avoid event loop conflicts
+        result_container = {}
+        def thread_target():
+            result_container['result'] = run_async_payment()
+        
+        thread = threading.Thread(target=thread_target)
+        thread.start()
+        thread.join()
+        
+        return result_container.get('result', PaymentResult(
+            status=PaymentStatus.PAYMENT_FAILED,
+            message="Payment processing failed"
+        ))
+
+    def validate_receipt_sync(self, receipt_id: str) -> PaymentResult:
+        """
+        Synchronous wrapper for receipt validation - keeps agent bridge code simple
+        """
+        import asyncio
+        import threading
+        
+        def run_async_validation():
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(
+                    self.validate_receipt(receipt_id)
+                )
+            finally:
+                loop.close()
+        
+        # Run in separate thread to avoid event loop conflicts
+        result_container = {}
+        def thread_target():
+            result_container['result'] = run_async_validation()
+        
+        thread = threading.Thread(target=thread_target)
+        thread.start()
+        thread.join()
+        
+        return result_container.get('result', PaymentResult(
+            status=PaymentStatus.INVALID_RECEIPT,
+            message="Receipt validation failed"
+        ))
+
     async def process_payment(
         self, 
         source_agent_id: str, 
