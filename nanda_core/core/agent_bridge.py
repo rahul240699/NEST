@@ -355,17 +355,28 @@ class SimpleAgentBridge(A2AServer):
     def _lookup_agent(self, agent_id: str) -> Optional[str]:
         """Look up agent URL in registry or use local discovery"""
         
-        # Try registry lookup if available
+        # Try payment middleware registry first (uses MongoDB if available)
+        if self.payment_middleware and hasattr(self.payment_middleware, 'registry_client') and self.payment_middleware.registry_client:
+            try:
+                agent_info = self.payment_middleware.registry_client.lookup_agent(agent_id)
+                if agent_info and 'agent_url' in agent_info:
+                    agent_url = agent_info['agent_url']
+                    logger.info(f"🍃 Found {agent_id} in MongoDB registry: {agent_url}")
+                    return agent_url
+            except Exception as e:
+                logger.warning(f"🍃 MongoDB registry lookup failed: {e}")
+        
+        # Try HTTP registry lookup if available
         if self.registry_url:
             try:
                 response = requests.get(f"{self.registry_url}/lookup/{agent_id}", timeout=10)
                 if response.status_code == 200:
                     data = response.json()
                     agent_url = data.get("agent_url")
-                    logger.info(f"🌐 Found {agent_id} in registry: {agent_url}")
+                    logger.info(f"🌐 Found {agent_id} in HTTP registry: {agent_url}")
                     return agent_url
             except Exception as e:
-                logger.warning(f"🌐 Registry lookup failed: {e}")
+                logger.warning(f"🌐 HTTP registry lookup failed: {e}")
         
         # Fallback to local discovery (for testing)
         local_agents = {
@@ -382,6 +393,7 @@ class SimpleAgentBridge(A2AServer):
             logger.info(f"🏠 Found {agent_id} locally: {local_agents[agent_id]}")
             return local_agents[agent_id]
         
+        logger.warning(f"❌ Agent {agent_id} not found in any registry")
         return None
     
     def _create_response(self, original_msg: Message, conversation_id: str, text: str) -> Message:
