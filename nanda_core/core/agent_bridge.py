@@ -72,39 +72,7 @@ class SimpleAgentBridge(A2AServer):
                 # System command
                 return self._handle_command(user_text, msg, conversation_id)
             else:
-                # Incoming message - check payment requirements for THIS agent
-                if self.payment_middleware:
-                    # Check if THIS agent requires payment
-                    payment_req = self.payment_middleware.check_payment_requirement(self.agent_id)
-                    
-                    if payment_req.status.value == "required":  # Use .value to get enum value
-                        if not receipt_id:
-                            # No receipt provided - return 402 payment required
-                            return self._create_response(
-                                msg, conversation_id,
-                                f"402-PAYMENT-REQUIRED: This agent requires {payment_req.amount} NP per request. Please provide payment receipt."
-                            )
-                        else:
-                            # Receipt provided - validate it
-                            import asyncio
-                            try:
-                                payment_result = asyncio.get_event_loop().run_until_complete(
-                                    self.payment_middleware.validate_receipt(receipt_id)
-                                )
-                                if payment_result.status.value != "paid":  # Use .value to get enum value
-                                    return self._create_response(
-                                        msg, conversation_id,
-                                        f"402-PAYMENT-REQUIRED: Invalid receipt {receipt_id}. Please provide valid payment receipt."
-                                    )
-                                else:
-                                    print(f"💰 Payment validated for {self.agent_id}: {payment_result.message}")
-                            except Exception as e:
-                                logger.error(f"Payment validation error: {e}")
-                                return self._create_response(
-                                    msg, conversation_id,
-                                    f"❌ Payment validation error: {str(e)}"
-                                )
-                
+                # Regular user message - no payment check needed for direct user messages
                 # Process regular message - use agent logic
                 if self.telemetry:
                     self.telemetry.log_message_received(self.agent_id, conversation_id)
@@ -144,6 +112,45 @@ class SimpleAgentBridge(A2AServer):
                     msg, conversation_id, 
                     f"[{from_agent}] {message_content[len('Response to ' + self.agent_id + ': '):]}"
                 )
+            
+            # PAYMENT CHECK: Only for incoming A2A messages from other agents
+            if self.payment_middleware:
+                # Extract receipt from message content
+                receipt_id = self.payment_middleware.extract_receipt_from_message(message_content)
+                
+                # Check if THIS agent requires payment
+                payment_req = self.payment_middleware.check_payment_requirement(self.agent_id)
+                
+                if payment_req.status.value == "required":  # Use .value to get enum value
+                    if not receipt_id:
+                        # No receipt provided - return 402 payment required
+                        return self._create_response(
+                            msg, conversation_id,
+                            f"[payment-client-agent-v2-1b4dab] 402-PAYMENT-REQUIRED: This agent requires {payment_req.amount} NP per request. Please provide payment receipt."
+                        )
+                    else:
+                        # Receipt provided - validate it
+                        import asyncio
+                        try:
+                            payment_result = asyncio.get_event_loop().run_until_complete(
+                                self.payment_middleware.validate_receipt(receipt_id)
+                            )
+                            if payment_result.status.value != "paid":  # Use .value to get enum value
+                                return self._create_response(
+                                    msg, conversation_id,
+                                    f"[payment-client-agent-v2-1b4dab] 402-PAYMENT-REQUIRED: Invalid receipt {receipt_id}. Please provide valid payment receipt."
+                                )
+                            else:
+                                logger.info(f"💰 Payment validated for {self.agent_id}: {payment_result.message}")
+                                # Remove receipt from message for processing
+                                import re
+                                message_content = re.sub(r'\s*#receipt:[a-zA-Z0-9\-]+', '', message_content).strip()
+                        except Exception as e:
+                            logger.error(f"Payment validation error: {e}")
+                            return self._create_response(
+                                msg, conversation_id,
+                                f"[payment-client-agent-v2-1b4dab] ❌ Payment validation error: {str(e)}"
+                            )
             
             # Process the message through our agent logic
             if self.telemetry:
