@@ -18,13 +18,14 @@ REGISTRY_URL="${8:-}"
 PORT="${9:-6000}"
 REGION="${10:-us-east-1}"
 INSTANCE_TYPE="${11:-t3.micro}"
+SERVICE_CHARGE="${12:-0.01}"
 
 # Validate inputs
 if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || [ -z "$DOMAIN" ] || [ -z "$SPECIALIZATION" ] || [ -z "$DESCRIPTION" ] || [ -z "$CAPABILITIES" ]; then
-    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE]"
+    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE] [SERVICE_CHARGE]"
     echo ""
     echo "Example:"
-    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" \"https://registry.example.com\" 6000 us-east-1 t3.micro"
+    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" \"https://registry.example.com\" 6000 us-east-1 t3.micro 0.05"
     echo ""
     echo "Parameters:"
     echo "  AGENT_ID: Unique identifier for the agent"
@@ -35,6 +36,10 @@ if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || 
     echo "  DESCRIPTION: Detailed description of the agent"
     echo "  CAPABILITIES: Comma-separated list of capabilities"
     echo "  REGISTRY_URL: Optional registry URL for agent discovery"
+    echo "  PORT: Port number (default: 6000)"
+    echo "  REGION: AWS region (default: us-east-1)"
+    echo "  INSTANCE_TYPE: EC2 instance type (default: t3.micro)"
+    echo "  SERVICE_CHARGE: Service charge in NP (default: 0.01)"
     exit 1
 fi
 
@@ -49,6 +54,7 @@ echo "Registry URL: ${REGISTRY_URL:-"None"}"
 echo "Port: $PORT"
 echo "Region: $REGION"
 echo "Instance Type: $INSTANCE_TYPE"
+echo "Service Charge: ${SERVICE_CHARGE} NP"
 echo ""
 
 # Configuration
@@ -178,7 +184,7 @@ sudo -u ubuntu bash -c "
     export REGISTRY_URL='$REGISTRY_URL'
     export PUBLIC_URL='http://\$PUBLIC_IP:$PORT'
     export PORT='$PORT'
-    export SERVICE_CHARGE='$SERVICE_CHARGE'
+    export SERVICE_CHARGE='${SERVICE_CHARGE:-0.01}'
     export ENABLE_PAYMENTS='true'
     nohup python3 examples/nanda_agent.py > agent.log 2>&1 &
 "

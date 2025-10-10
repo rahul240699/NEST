@@ -50,7 +50,9 @@ def get_agent_config():
     capabilities = os.getenv("AGENT_CAPABILITIES", "general assistance,Ubuntu system administration,Python development,cloud deployment,agent-to-agent communication")
     registry_url = os.getenv("REGISTRY_URL", None)
     public_url = os.getenv("PUBLIC_URL", None)
-    service_charge = float(os.getenv("SERVICE_CHARGE", "0.0"))
+    # Handle service charge with fallback for empty strings
+    service_charge_str = os.getenv("SERVICE_CHARGE", "0.0").strip()
+    service_charge = float(service_charge_str) if service_charge_str else 0.0
     enable_payments = os.getenv("ENABLE_PAYMENTS", "false").lower() == "true"
     
     # Parse capabilities into a list
