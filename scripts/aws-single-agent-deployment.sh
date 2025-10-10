@@ -131,6 +131,9 @@ cd /home/ubuntu
 sudo -u ubuntu git clone https://github.com/rahul240699/NEST.git nanda-agent-$AGENT_ID
 cd nanda-agent-$AGENT_ID
 
+# Checkout the payments branch
+sudo -u ubuntu git checkout feature/payments
+
 # Create virtual environment and install
 sudo -u ubuntu python3 -m venv env
 sudo -u ubuntu bash -c "source env/bin/activate && pip install --upgrade pip && pip install -e . && pip install anthropic"
