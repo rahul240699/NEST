@@ -11,6 +11,8 @@ This module handles payment flows between agents:
 
 import asyncio
 import logging
+import time
+import json
 from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -113,6 +115,68 @@ class PaymentMiddleware:
             message=f"Agent {target_agent_id} requires {service_charge} NP per request"
         )
     
+    async def ensure_agent_wallet(self, agent_name: str) -> bool:
+        """Ensure agent has a wallet attached"""
+        try:
+            client = MCPClient()
+            tools = await client.connect_to_server("https://p01--nanda-points-mcp--qvf8hqwjtv29.code.run/mcp")
+            if not tools:
+                return False
+            
+            # Check if agent already has a balance (wallet attached)
+            try:
+                result = await client.session.call_tool("getBalance", {"agent_name": agent_name})
+                # If successful, agent has wallet
+                await client.exit_stack.aclose()
+                return True
+            except:
+                # Agent doesn't have wallet, attach one
+                try:
+                    await client.session.call_tool("attachWallet", {
+                        "agent_name": agent_name,
+                        "wallet_address": f"{agent_name}-wallet-{int(time.time())}"
+                    })
+                    await client.exit_stack.aclose()
+                    return True
+                except Exception as e:
+                    print(f"Failed to attach wallet for {agent_name}: {e}")
+                    await client.exit_stack.aclose()
+                    return False
+        except Exception as e:
+            print(f"Error ensuring wallet for {agent_name}: {e}")
+            return False
+
+    async def ensure_agent_wallet(self, agent_name: str) -> bool:
+        """Ensure agent has a wallet attached"""
+        try:
+            client = MCPClient()
+            tools = await client.connect_to_server("https://p01--nanda-points-mcp--qvf8hqwjtv29.code.run/mcp")
+            if not tools:
+                return False
+            
+            # Check if agent already has a balance (wallet attached)
+            try:
+                result = await client.session.call_tool("getBalance", {"agent_name": agent_name})
+                # If successful, agent has wallet
+                await client.exit_stack.aclose()
+                return True
+            except:
+                # Agent doesn't have wallet, attach one
+                try:
+                    await client.session.call_tool("attachWallet", {
+                        "agent_name": agent_name,
+                        "wallet_address": f"{agent_name}-wallet-{int(time.time())}"
+                    })
+                    await client.exit_stack.aclose()
+                    return True
+                except Exception as e:
+                    print(f"Failed to attach wallet for {agent_name}: {e}")
+                    await client.exit_stack.aclose()
+                    return False
+        except Exception as e:
+            print(f"Error ensuring wallet for {agent_name}: {e}")
+            return False
+
     async def process_payment(
         self, 
         source_agent_id: str, 
@@ -140,41 +204,94 @@ class PaymentMiddleware:
             )
         
         try:
-            async with MCPClient(anthropic_client) as client:
-                # Initiate transaction via MCP with task parameter
-                task_description = f"Agent-to-agent service request from {source_agent_id} to {target_agent_id}"
-                query = f"initiate a transaction of {amount} NP from {source_agent_id} to {target_agent_id} for task: {task_description}"
-                result = await client.process_query(query, mcp_server_url)
-                
-                # Parse result to extract transaction ID and check for success
-                import re
-                
-                # Check for successful transaction
-                if "completed successfully" in result.lower() or "transaction was completed" in result.lower():
-                    # Extract transaction ID
-                    transaction_match = re.search(r'transaction\s+ID[:\s]+([a-fA-F0-9\-]+)', result, re.IGNORECASE)
+            # Ensure both agents have wallets first
+            if not await self.ensure_agent_wallet(source_agent_id):
+                return PaymentResult(
+                    status=PaymentStatus.PAYMENT_FAILED,
+                    message=f"Failed to setup wallet for sender: {source_agent_id}"
+                )
+            
+            if not await self.ensure_agent_wallet(target_agent_id):
+                return PaymentResult(
+                    status=PaymentStatus.PAYMENT_FAILED,
+                    message=f"Failed to setup wallet for recipient: {target_agent_id}"
+                )
+            
+            client = MCPClient()
+            
+            # Connect to the MCP server
+            tools = await client.connect_to_server(mcp_server_url)
+            if not tools:
+                return PaymentResult(
+                    status=PaymentStatus.PAYMENT_FAILED,
+                    message="Could not connect to MCP payment server"
+                )
+            
+            # Use the initiateTransaction tool directly
+            task_description = f"Agent-to-agent service request from {source_agent_id} to {target_agent_id}"
+            
+            # Call the initiateTransaction tool directly
+            transaction_result = await client.session.call_tool(
+                "initiateTransaction",
+                {
+                    "from": source_agent_id,
+                    "to": target_agent_id, 
+                    "amount": amount,
+                    "task": task_description
+                }
+            )
+            
+            # Parse the MCP response properly
+            if transaction_result and transaction_result.content:
+                response_text = transaction_result.content[0].text
+                try:
+                    response_data = json.loads(response_text)
                     
-                    transaction_id = transaction_match.group(1) if transaction_match else None
-                    # Use transaction ID as receipt ID for compatibility
-                    receipt_id = transaction_id
-                    
-                    return PaymentResult(
-                        status=PaymentStatus.PAID,
-                        amount=amount,
-                        receipt_id=receipt_id,
-                        transaction_id=transaction_id,
-                        message=f"Payment of {amount} NP processed successfully"
-                    )
-                elif "insufficient" in result.lower():
-                    return PaymentResult(
-                        status=PaymentStatus.INSUFFICIENT_BALANCE,
-                        message=f"Insufficient balance for {amount} NP payment"
-                    )
-                else:
-                    return PaymentResult(
-                        status=PaymentStatus.PAYMENT_FAILED,
-                        message=f"Payment failed: {result}"
-                    )
+                    if "transaction_id" in response_data:
+                        transaction_id = response_data["transaction_id"]
+                        return PaymentResult(
+                            status=PaymentStatus.PAID,
+                            amount=amount,
+                            receipt_id=transaction_id,
+                            transaction_id=transaction_id,
+                            message=f"Payment of {amount} NP processed successfully"
+                        )
+                    elif "error" in response_data:
+                        error = response_data["error"]
+                        if error == "INSUFFICIENT_BALANCE":
+                            return PaymentResult(
+                                status=PaymentStatus.INSUFFICIENT_BALANCE,
+                                message=f"Insufficient balance for {amount} NP payment"
+                            )
+                        else:
+                            return PaymentResult(
+                                status=PaymentStatus.PAYMENT_FAILED,
+                                message=f"Payment failed: {error}"
+                            )
+                except json.JSONDecodeError:
+                    # Fallback to string parsing for non-JSON responses
+                    result = str(transaction_result)
+                    if "completed successfully" in result.lower():
+                        return PaymentResult(
+                            status=PaymentStatus.PAID,
+                            amount=amount,
+                            message=f"Payment of {amount} NP processed successfully"
+                        )
+                    elif "insufficient" in result.lower():
+                        return PaymentResult(
+                            status=PaymentStatus.INSUFFICIENT_BALANCE,
+                            message=f"Insufficient balance for {amount} NP payment"
+                        )
+                    else:
+                        return PaymentResult(
+                            status=PaymentStatus.PAYMENT_FAILED,
+                            message=f"Payment failed: {result}"
+                        )
+            
+            return PaymentResult(
+                status=PaymentStatus.PAYMENT_FAILED,
+                message="No response from payment server"
+            )
                     
         except Exception as e:
             return PaymentResult(
@@ -205,29 +322,66 @@ class PaymentMiddleware:
             )
         
         try:
-            async with MCPClient(anthropic_client) as client:
-                # Get receipt via MCP
-                query = f"get receipt for {receipt_id}"
-                result = await client.process_query(query, mcp_server_url)
-                
-                # Check if receipt is valid
-                if "not found" in result.lower() or "invalid" in result.lower():
-                    return PaymentResult(
-                        status=PaymentStatus.INVALID_RECEIPT,
-                        message=f"Receipt {receipt_id} not found or invalid"
-                    )
-                
-                # Extract amount from receipt
-                import re
-                amount_match = re.search(r'(\d+)\s*NP', result)
-                amount = int(amount_match.group(1)) if amount_match else 0
-                
+            client = MCPClient()
+            
+            # Connect to the MCP server
+            tools = await client.connect_to_server(mcp_server_url)
+            if not tools:
                 return PaymentResult(
-                    status=PaymentStatus.PAID,
-                    amount=amount,
-                    receipt_id=receipt_id,
-                    message=f"Receipt {receipt_id} validated for {amount} NP"
+                    status=PaymentStatus.INVALID_RECEIPT,
+                    message="Could not connect to MCP payment server"
                 )
+            
+            # Use the getReceipt tool directly
+            receipt_result = await client.session.call_tool(
+                "getReceipt",
+                {"txId": receipt_id}
+            )
+            
+            # Parse the MCP response properly
+            if receipt_result and receipt_result.content:
+                response_text = receipt_result.content[0].text
+                try:
+                    response_data = json.loads(response_text)
+                    
+                    if "error" in response_data:
+                        return PaymentResult(
+                            status=PaymentStatus.INVALID_RECEIPT,
+                            message=f"Receipt {receipt_id} not found or invalid"
+                        )
+                    elif "transaction_id" in response_data or "amount" in response_data:
+                        amount = response_data.get("amount", 0)
+                        return PaymentResult(
+                            status=PaymentStatus.VALID_RECEIPT,
+                            amount=amount,
+                            receipt_id=receipt_id,
+                            message=f"Receipt {receipt_id} validated for {amount} NP"
+                        )
+                except json.JSONDecodeError:
+                    # Fallback to string parsing
+                    result = str(receipt_result)
+                    if "not found" in result.lower() or "invalid" in result.lower():
+                        return PaymentResult(
+                            status=PaymentStatus.INVALID_RECEIPT,
+                            message=f"Receipt {receipt_id} not found or invalid"
+                        )
+                    else:
+                        # Extract amount from receipt
+                        import re
+                        amount_match = re.search(r'(\d+)\s*NP', result)
+                        amount = int(amount_match.group(1)) if amount_match else 0
+                        
+                        return PaymentResult(
+                            status=PaymentStatus.PAID,
+                            amount=amount,
+                            receipt_id=receipt_id,
+                            message=f"Receipt {receipt_id} validated for {amount} NP"
+                        )
+            
+            return PaymentResult(
+                status=PaymentStatus.INVALID_RECEIPT,
+                message="No response from payment server"
+            )
                 
         except Exception as e:
             return PaymentResult(
