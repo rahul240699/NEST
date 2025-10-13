@@ -263,7 +263,6 @@ class PaymentMiddleware:
             task_description = f"Agent-to-agent service request from {source_agent_id} to {target_agent_id}"
             
             # Call the initiateTransaction tool directly
-            logger.info(f"🚀 Calling initiateTransaction: from={source_agent_id}, to={target_agent_id}, amount={amount}")
             transaction_result = await client.session.call_tool(
                 "initiateTransaction",
                 {
@@ -273,17 +272,13 @@ class PaymentMiddleware:
                     "task": task_description
                 }
             )
-            logger.info(f"🔍 Raw transaction_result: {transaction_result}")
-            logger.info(f"🔍 Has content: {hasattr(transaction_result, 'content') if transaction_result else 'None'}")
             
             # Parse the MCP response properly
             if transaction_result and transaction_result.content:
                 response_text = transaction_result.content[0].text
-                logger.info(f"🔍 MCP Response: {response_text}")
                 
                 try:
                     response_data = json.loads(response_text)
-                    logger.info(f"🔍 Parsed JSON: {response_data}")
                     
                     if "txId" in response_data and response_data.get("status") == "completed":
                         transaction_id = response_data["txId"]
@@ -371,16 +366,20 @@ class PaymentMiddleware:
                 )
             
             # Use the getReceipt tool directly
+            logger.info(f"🔍 Validating receipt: {receipt_id}")
             receipt_result = await client.session.call_tool(
                 "getReceipt",
                 {"txId": receipt_id}
             )
+            logger.info(f"🔍 Receipt validation raw result: {receipt_result}")
             
             # Parse the MCP response properly
             if receipt_result and receipt_result.content:
                 response_text = receipt_result.content[0].text
+                logger.info(f"🔍 Receipt response text: {response_text}")
                 try:
                     response_data = json.loads(response_text)
+                    logger.info(f"🔍 Receipt parsed JSON: {response_data}")
                     
                     if "error" in response_data:
                         return PaymentResult(
