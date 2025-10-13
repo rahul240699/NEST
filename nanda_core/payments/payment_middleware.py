@@ -384,7 +384,7 @@ class PaymentMiddleware:
                     elif "transaction_id" in response_data or "amount" in response_data:
                         amount = response_data.get("amount", 0)
                         return PaymentResult(
-                            status=PaymentStatus.VALID_RECEIPT,
+                            status=PaymentStatus.PAID,
                             amount=amount,
                             receipt_id=receipt_id,
                             message=f"Receipt {receipt_id} validated for {amount} NP"
