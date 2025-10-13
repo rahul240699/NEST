@@ -130,42 +130,10 @@ class PaymentMiddleware:
                 await client.exit_stack.aclose()
                 return True
             except:
-                # Agent doesn't have wallet, attach one
+                # Agent doesn't have wallet, attach one - just send agent ID
                 try:
                     await client.session.call_tool("attachWallet", {
-                        "agent_name": agent_name,
-                        "wallet_address": f"{agent_name}-wallet-{int(time.time())}"
-                    })
-                    await client.exit_stack.aclose()
-                    return True
-                except Exception as e:
-                    print(f"Failed to attach wallet for {agent_name}: {e}")
-                    await client.exit_stack.aclose()
-                    return False
-        except Exception as e:
-            print(f"Error ensuring wallet for {agent_name}: {e}")
-            return False
-
-    async def ensure_agent_wallet(self, agent_name: str) -> bool:
-        """Ensure agent has a wallet attached"""
-        try:
-            client = MCPClient()
-            tools = await client.connect_to_server("https://p01--nanda-points-mcp--qvf8hqwjtv29.code.run/mcp")
-            if not tools:
-                return False
-            
-            # Check if agent already has a balance (wallet attached)
-            try:
-                result = await client.session.call_tool("getBalance", {"agent_name": agent_name})
-                # If successful, agent has wallet
-                await client.exit_stack.aclose()
-                return True
-            except:
-                # Agent doesn't have wallet, attach one
-                try:
-                    await client.session.call_tool("attachWallet", {
-                        "agent_name": agent_name,
-                        "wallet_address": f"{agent_name}-wallet-{int(time.time())}"
+                        "agent_id": agent_name
                     })
                     await client.exit_stack.aclose()
                     return True
@@ -269,17 +237,17 @@ class PaymentMiddleware:
         
         try:
             # Let MCP server handle wallet management automatically
-            # if not await self.ensure_agent_wallet(source_agent_id):
-            #     return PaymentResult(
-            #         status=PaymentStatus.PAYMENT_FAILED,
-            #         message=f"Failed to setup wallet for sender: {source_agent_id}"
-            #     )
-            # 
-            # if not await self.ensure_agent_wallet(target_agent_id):
-            #     return PaymentResult(
-            #         status=PaymentStatus.PAYMENT_FAILED,
-            #         message=f"Failed to setup wallet for recipient: {target_agent_id}"
-            #     )
+            if not await self.ensure_agent_wallet(source_agent_id):
+                return PaymentResult(
+                    status=PaymentStatus.PAYMENT_FAILED,
+                    message=f"Failed to setup wallet for sender: {source_agent_id}"
+                )
+            
+            if not await self.ensure_agent_wallet(target_agent_id):
+                return PaymentResult(
+                    status=PaymentStatus.PAYMENT_FAILED,
+                    message=f"Failed to setup wallet for recipient: {target_agent_id}"
+                )
             
             client = MCPClient()
             
