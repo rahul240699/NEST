@@ -285,8 +285,8 @@ class PaymentMiddleware:
                     response_data = json.loads(response_text)
                     logger.info(f"🔍 Parsed JSON: {response_data}")
                     
-                    if "transaction_id" in response_data:
-                        transaction_id = response_data["transaction_id"]
+                    if "txId" in response_data and response_data.get("status") == "completed":
+                        transaction_id = response_data["txId"]
                         return PaymentResult(
                             status=PaymentStatus.PAID,
                             amount=amount,
@@ -387,8 +387,8 @@ class PaymentMiddleware:
                             status=PaymentStatus.INVALID_RECEIPT,
                             message=f"Receipt {receipt_id} not found or invalid"
                         )
-                    elif "transaction_id" in response_data or "amount" in response_data:
-                        amount = response_data.get("amount", 0)
+                    elif "txId" in response_data or "amountPoints" in response_data:
+                        amount = response_data.get("amountPoints", 0)
                         return PaymentResult(
                             status=PaymentStatus.PAID,
                             amount=amount,
