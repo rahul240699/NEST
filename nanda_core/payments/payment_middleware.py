@@ -263,6 +263,7 @@ class PaymentMiddleware:
             task_description = f"Agent-to-agent service request from {source_agent_id} to {target_agent_id}"
             
             # Call the initiateTransaction tool directly
+            print(f"🚀 Calling initiateTransaction: from={source_agent_id}, to={target_agent_id}, amount={amount}")
             transaction_result = await client.session.call_tool(
                 "initiateTransaction",
                 {
@@ -272,12 +273,17 @@ class PaymentMiddleware:
                     "task": task_description
                 }
             )
+            print(f"🔍 Raw transaction_result: {transaction_result}")
+            print(f"🔍 Has content: {hasattr(transaction_result, 'content') if transaction_result else 'None'}")
             
             # Parse the MCP response properly
             if transaction_result and transaction_result.content:
                 response_text = transaction_result.content[0].text
+                print(f"🔍 MCP Response: {response_text}")  # Debug logging
+                
                 try:
                     response_data = json.loads(response_text)
+                    print(f"🔍 Parsed JSON: {response_data}")  # Debug logging
                     
                     if "transaction_id" in response_data:
                         transaction_id = response_data["transaction_id"]
