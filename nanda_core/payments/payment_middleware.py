@@ -138,11 +138,11 @@ class PaymentMiddleware:
                     await client.exit_stack.aclose()
                     return True
                 except Exception as e:
-                    print(f"Failed to attach wallet for {agent_name}: {e}")
+                    logger.error(f"Failed to attach wallet for {agent_name}: {e}")
                     await client.exit_stack.aclose()
                     return False
         except Exception as e:
-            print(f"Error ensuring wallet for {agent_name}: {e}")
+            logger.error(f"Error ensuring wallet for {agent_name}: {e}")
             return False
 
     def process_payment_sync(self, source_agent_id: str, target_agent_id: str, amount: int) -> PaymentResult:
@@ -263,7 +263,7 @@ class PaymentMiddleware:
             task_description = f"Agent-to-agent service request from {source_agent_id} to {target_agent_id}"
             
             # Call the initiateTransaction tool directly
-            print(f"🚀 Calling initiateTransaction: from={source_agent_id}, to={target_agent_id}, amount={amount}")
+            logger.info(f"🚀 Calling initiateTransaction: from={source_agent_id}, to={target_agent_id}, amount={amount}")
             transaction_result = await client.session.call_tool(
                 "initiateTransaction",
                 {
@@ -273,17 +273,17 @@ class PaymentMiddleware:
                     "task": task_description
                 }
             )
-            print(f"🔍 Raw transaction_result: {transaction_result}")
-            print(f"🔍 Has content: {hasattr(transaction_result, 'content') if transaction_result else 'None'}")
+            logger.info(f"🔍 Raw transaction_result: {transaction_result}")
+            logger.info(f"🔍 Has content: {hasattr(transaction_result, 'content') if transaction_result else 'None'}")
             
             # Parse the MCP response properly
             if transaction_result and transaction_result.content:
                 response_text = transaction_result.content[0].text
-                print(f"🔍 MCP Response: {response_text}")  # Debug logging
+                logger.info(f"🔍 MCP Response: {response_text}")
                 
                 try:
                     response_data = json.loads(response_text)
-                    print(f"🔍 Parsed JSON: {response_data}")  # Debug logging
+                    logger.info(f"🔍 Parsed JSON: {response_data}")
                     
                     if "transaction_id" in response_data:
                         transaction_id = response_data["transaction_id"]
