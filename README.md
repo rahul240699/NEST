@@ -15,53 +15,63 @@ A production-ready framework for deploying and managing specialized AI agents wi
 
 ## Quick Start
 
-### Deploy a Single Agent
+### Deploy on AWS
 
 ```bash
-bash scripts/aws-single-agent-deployment.sh \
-  "agent-id" \                    # Unique identifier
-  "your-api-key" \                # Anthropic Claude API key
-  "Agent Name" \                  # Display name
-  "domain" \                      # Field of expertise
-  "specialization" \              # Role description
-  "description" \                 # Detailed agent description
-  "capabilities" \                # Comma-separated capabilities
-  "registry-url" \                # Registry URL 
-  "port" \                        # Port number 
-  "region" \                      # AWS region 
-  "instance-type"                 # EC2 instance type 
+# Single agent deployment
+bash scripts/aws/single-agent-deployment.sh \
+  "agent-id" "anthropic-api-key" "Agent Name" "domain" \
+  "specialization" "description" "capabilities" "smithery-api-key" \
+  "registry-url" "mcp-registry-url" "port" "region" "instance-type"
+
+# Multi-agent deployment
+bash scripts/aws/multi-agent-deployment.sh \
+  "anthropic-api-key" "agent-config-json" "smithery-api-key" \
+  "registry-url" "mcp-registry-url" "region" "instance-type"
 ```
 
-**Example:**
+### Deploy on Google Cloud Platform (GCP)
+
 ```bash
-bash scripts/aws-single-agent-deployment.sh \
-  "furniture-expert" \
-  "sk-ant-api03-..." \
-  "Furniture Expert" \
-  "furniture and interior design" \
-  "knowledgeable furniture specialist" \
+# Single agent deployment
+bash scripts/gcp/single-agent-deployment.sh \
+  "agent-id" "anthropic-api-key" "Agent Name" "domain" \
+  "specialization" "description" "capabilities" "smithery-api-key" \
+  "registry-url" "mcp-registry-url" "port" "zone" "machine-type"
+
+# Multi-agent deployment  
+bash scripts/gcp/multi-agent-deployment.sh \
+  "anthropic-api-key" "agent-config-json" "smithery-api-key" \
+  "registry-url" "mcp-registry-url" "zone" "machine-type"
+```
+
+**Example (AWS):**
+
+```bash
+bash scripts/aws/single-agent-deployment.sh \
+  "furniture-expert" "sk-ant-api03-..." "Furniture Expert" \
+  "furniture and interior design" "knowledgeable furniture specialist" \
   "I help with furniture selection and interior design" \
-  "furniture,interior design,decor" \
-  "http://registry.chat39.com:6900" \
-  "6000" \
-  "us-east-1" \
-  "t3.micro"
+  "furniture,interior design,decor" "smithery-key-123..." \
+  "http://registry.chat39.com:6900" "https://mcp-registry.ngrok.app" \
+  "6000" "us-east-1" "t3.micro"
 ```
 
-### Deploy Multiple Agents (10 per instance)
+**Example (GCP):**
 
 ```bash
-bash scripts/aws-multi-agent-deployment.sh \
-  "your-api-key" \
-  "scripts/agent_configs/group-01-business-and-finance-experts.json" \
-  "http://registry.chat39.com:6900" \
-  "us-east-1" \
-  "t3.xlarge"
+bash scripts/gcp/single-agent-deployment.sh \
+  "gcp-data-scientist" "sk-ant-api03-..." "GCP Data Scientist" \
+  "data analysis" "analytical AI assistant" \
+  "I specialize in data analysis on GCP" \
+  "data,analytics,gcp,bigquery" "smithery-key-123..." \
+  "http://registry.chat39.com:6900" "https://mcp-registry.ngrok.app" \
+  "6000" "us-central1-a" "e2-micro"
 ```
 
 ## Architecture
 
-```
+```text
 NEST/
 ├── nanda_core/                        # Core framework
 │   ├── core/
@@ -125,6 +135,7 @@ Pre-configured agent groups for quick deployment:
 ## Monitoring
 
 Each deployed agent includes:
+
 - **Health checks** on startup
 - **Automatic registry registration**
 - **Process management** with supervisor
@@ -145,6 +156,7 @@ Each deployed agent includes:
 ### Agent Personality Configuration
 
 Agents are configured with:
+
 - **Domain**: Primary area of expertise
 - **Specialization**: Specific role and personality
 - **Description**: Detailed background for system prompt
@@ -153,6 +165,7 @@ Agents are configured with:
 ## Testing
 
 ### Test Single Agent
+
 ```bash
 curl -X POST http://agent-ip:{PORT}/a2a \
   -H "Content-Type: application/json" \
@@ -160,6 +173,7 @@ curl -X POST http://agent-ip:{PORT}/a2a \
 ```
 
 ### Test A2A Communication
+
 ```bash
 curl -X POST http://agent-a-ip:{PORT}/a2a \
   -H "Content-Type: application/json" \
@@ -191,6 +205,7 @@ MIT License - see LICENSE file for details.
 ## Support
 
 For issues and questions:
+
 - Create an issue in this repository
 - Check the documentation in `/scripts/README.md`
 - Review example configurations in `/scripts/`

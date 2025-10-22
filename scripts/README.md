@@ -1,57 +1,189 @@
 # 🚀 NANDA Agent Deployment Scripts
 
-Production-ready scripts for deploying NANDA agents to AWS EC2.
+Production-ready scripts for deploying NANDA agents across multiple cloud platforms.
 
-## 📋 Available Scripts
+## ☁️ Multi-Cloud Support
 
-### 🤖 Single Agent Deployment
-**`aws-single-agent-deployment.sh`** - Deploy one specialized agent to one EC2 instance
+Deploy NANDA agents on your preferred cloud provider:
 
+| Platform | Directory | Status | Documentation |
+|----------|-----------|--------|---------------|
+| **AWS** | `aws/` | ✅ Production Ready | [AWS README](aws/README.md) |
+| **GCP** | `gcp/` | ✅ Production Ready | [GCP README](gcp/README.md) |
+| **Azure** | `azure/` | ✅ Production Ready | [Azure README](azure/README.md) |
+
+Each platform supports:
+- 🤖 **Single Agent Deployment** - One agent per VM/instance
+- 🏭 **Multi-Agent Deployment** - Multiple agents on one VM (supervisor-managed)
+- 🌍 **Multi-Region Deployment** - Deploy across multiple regions
+
+---
+
+## Quick Start
+
+### AWS Deployment
 ```bash
-bash aws-single-agent-deployment.sh <AGENT_ID> <API_KEY> <NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE]
+cd aws
+bash single-agent-deployment.sh "agent-id" "sk-ant-..." "Agent Name"
 ```
 
-**Example:**
+### GCP Deployment
 ```bash
-bash aws-single-agent-deployment.sh \
+cd gcp
+bash single-agent-deployment.sh "agent-id" "sk-ant-..." "Agent Name"
+```
+
+### Azure Deployment
+```bash
+cd azure
+bash single-agent-deployment.sh "agent-id" "sk-ant-..." "Agent Name"
+```
+
+## 📋 Cloud-Specific Features
+
+### AWS (`aws/`)
+- ✅ EC2 instance deployment
+- ✅ Security groups auto-configuration
+- ✅ IMDSv2 for metadata retrieval
+- ✅ Supervisor-based multi-agent management
+- ✅ Automatic key pair generation
+
+### GCP (`gcp/`)
+- ✅ Compute Engine deployment
+- ✅ Firewall rules auto-configuration
+- ✅ Metadata service integration
+- ✅ Supervisor-based multi-agent management
+- ✅ SSH key management
+
+### Azure (`azure/`)
+- ✅ Virtual Machine deployment
+- ✅ Network Security Groups (NSG)
+- ✅ Virtual network auto-setup
+- ✅ Cloud-init configuration
+- ✅ Systemd/supervisor service management
+
+---
+
+## 📋 Script Types (Available on All Platforms)
+
+### 🤖 Single Agent Deployment
+Deploy one specialized agent to one VM/instance
+
+**Example (AWS):**
+```bash
+cd aws
+bash single-agent-deployment.sh \
   "data-scientist" \
   "sk-ant-api03-..." \
   "Data Scientist" \
+  "main" \
   "data analysis" \
   "expert data analyst and machine learning specialist" \
-  "I help with statistical analysis, machine learning, and data visualization" \
-  "python,statistics,machine learning,data visualization" \
+  "python,statistics,machine learning" \
+  "" \
   "http://registry.chat39.com:6900" \
-  "6000" \
-  "us-east-1" \
-  "t3.micro"
+  "" \
+  6000 \
+  us-east-1 \
+  t3.micro
+```
+
+**Example (GCP):**
+```bash
+cd gcp
+bash single-agent-deployment.sh \
+  "data-scientist" \
+  "sk-ant-api03-..." \
+  "Data Scientist" \
+  "main" \
+  "data analysis" \
+  "expert data analyst" \
+  "python,statistics" \
+  "" \
+  "http://registry.chat39.com:6900" \
+  "" \
+  6000 \
+  us-central1-a \
+  e2-micro
+```
+
+**Example (Azure):**
+```bash
+cd azure
+bash single-agent-deployment.sh \
+  "data-scientist" \
+  "sk-ant-api03-..." \
+  "Data Scientist" \
+  "main" \
+  "data analysis" \
+  "python,statistics" \
+  "" \
+  "http://registry.chat39.com:6900" \
+  "" \
+  6000 \
+  eastus \
+  Standard_B1s
 ```
 
 ### 🏭 Multi-Agent Deployment  
-**`aws-multi-agent-deployment.sh`** - Deploy 10 agents to one EC2 instance
+Deploy multiple agents (typically 10) to one VM/instance with supervisor management
 
+**Example (AWS):**
 ```bash
-bash aws-multi-agent-deployment.sh <API_KEY> <CONFIG_JSON> [REGISTRY_URL] [REGION] [INSTANCE_TYPE]
-```
-
-**Example:**
-```bash
-bash aws-multi-agent-deployment.sh \
+cd aws
+bash multi-agent-deployment.sh \
   "sk-ant-api03-..." \
-  "agent_configs/group-01-business-and-finance-experts.json" \
+  "../agent_configs/group-01-business-and-finance-experts.json" \
   "http://registry.chat39.com:6900" \
   "us-east-1" \
-  "t3.xlarge"
+  "t3.large"
 ```
 
-### 🖥️ Existing Server Deployment
-**`deploy-agent.sh`** - Deploy agent to existing Ubuntu/Amazon Linux server
-
+**Example (GCP):**
 ```bash
-bash deploy-agent.sh <AGENT_TYPE> <AGENT_ID> <API_KEY> [PORT] [REGISTRY_URL]
+cd gcp
+bash multi-agent-deployment.sh \
+  "sk-ant-api03-..." \
+  "../agent_configs/group-01-business-and-finance-experts.json" \
+  "" \
+  "http://registry.chat39.com:6900" \
+  "" \
+  "us-central1-a" \
+  "e2-standard-4"
 ```
 
-## 📦 Pre-configured Agent Groups
+**Example (Azure):**
+```bash
+cd azure
+bash multi-agent-deployment.sh \
+  "sk-ant-api03-..." \
+  "../agent_configs/group-01-business-and-finance-experts.json" \
+  "http://registry.chat39.com:6900" \
+  "" \
+  "eastus" \
+  "Standard_B4ms"
+```
+
+### 🌍 Multi-Region Deployment
+Deploy agent groups across multiple regions for geographic distribution
+
+**Example (GCP):**
+```bash
+cd gcp
+bash multi-region-deployment.sh \
+  "sk-ant-api03-..." \
+  '[{"region":"us-central1-a","config":"../agent_configs/group-01.json"},{"region":"us-west1-b","config":"../agent_configs/group-02.json"}]'
+```
+
+**Example (Azure):**
+```bash
+cd azure
+bash multi-region-deployment.sh \
+  "sk-ant-api03-..." \
+  '[{"region":"eastus","config":"../agent_configs/group-01.json"},{"region":"westus","config":"../agent_configs/group-02.json"}]'
+```
+
+---
 
 Ready-to-deploy agent configurations:
 
