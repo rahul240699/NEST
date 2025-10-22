@@ -48,6 +48,8 @@ test_logs/
 *.swp
 *.swo
 *~
+AGENTS.md
+.github/
 
 # macOS
 .DS_Store
@@ -82,3 +84,4 @@ out.log
 *.tmp
 *.temp
 .cache/
+test*
