@@ -12,8 +12,8 @@ Production-ready scripts for deploying NANDA agents to multiple cloud providers.
 ## 📋 Available Scripts
 
 ### AWS EC2
-- `aws/aws-single-agent-deployment.sh` - Deploy one agent to AWS EC2
-- `aws/aws-multi-agent-deployment.sh` - Deploy multiple agents to one EC2 instance
+- `aws-single-agent-deployment.sh` - Deploy one agent to AWS EC2
+- `aws-multi-agent-deployment.sh` - Deploy multiple agents to one EC2 instance
 
 ### DigitalOcean
 - `digitalocean/single-agent-deployment.sh` - Deploy one agent to DigitalOcean
@@ -38,7 +38,7 @@ bash scripts/aws/aws-single-agent-deployment.sh <AGENT_ID> <API_KEY> <NAME> <DOM
 
 **Example:**
 ```bash
-bash scripts/aws/aws-single-agent-deployment.sh \
+bash aws-single-agent-deployment.sh \
   "data-scientist" \
   "sk-ant-api03-..." \
   "Data Scientist" \
@@ -53,15 +53,15 @@ bash scripts/aws/aws-single-agent-deployment.sh \
 ```
 
 ### 🏭 Multi-Agent Deployment  
-**`aws/aws-multi-agent-deployment.sh`** - Deploy 10 agents to one EC2 instance
+**`aws-multi-agent-deployment.sh`** - Deploy 10 agents to one EC2 instance
 
 ```bash
-bash scripts/aws/aws-multi-agent-deployment.sh <API_KEY> <CONFIG_JSON> [REGISTRY_URL] [REGION] [INSTANCE_TYPE]
+bash aws-multi-agent-deployment.sh <API_KEY> <CONFIG_JSON> [REGISTRY_URL] [REGION] [INSTANCE_TYPE]
 ```
 
 **Example:**
 ```bash
-bash scripts/aws/aws-multi-agent-deployment.sh \
+bash aws-multi-agent-deployment.sh \
   "sk-ant-api03-..." \
   "agent_configs/group-01-business-and-finance-experts.json" \
   "http://registry.chat39.com:6900" \
@@ -185,7 +185,7 @@ ps aux | grep python
 ### Deploy 100 Agents (10 instances)
 ```bash
 for i in {1..10}; do
-  bash scripts/aws/aws-multi-agent-deployment.sh \
+  bash aws-multi-agent-deployment.sh \
     "sk-ant-api03-..." \
     "group-0${i}-*.json" \
     "http://registry.chat39.com:6900" \
@@ -198,7 +198,7 @@ done
 ```bash
 # Deploy to multiple regions
 for region in us-east-1 us-west-2 eu-west-1; do
-  bash scripts/aws/aws-multi-agent-deployment.sh \
+  bash aws-multi-agent-deployment.sh \
     "sk-ant-api03-..." \
     "group-01-business-and-finance-experts.json" \
     "http://registry.chat39.com:6900" \

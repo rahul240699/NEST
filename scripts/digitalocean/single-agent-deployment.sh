@@ -87,7 +87,7 @@ fi
 SSH_KEY_ID=$(doctl compute ssh-key list --format ID,Name --no-header | grep "$SSH_KEY_NAME" | awk '{print $1}' || echo "")
 if [ -z "$SSH_KEY_ID" ]; then
     echo "Uploading SSH key to DigitalOcean..."
-    SSH_KEY_ID=$(doctl compute ssh-key create "$SSH_KEY_NAME" --public-key-file "${SSH_KEY_NAME}.pub" --format ID --no-header)
+    SSH_KEY_ID=$(doctl compute ssh-key create "$SSH_KEY_NAME" --public-key "$(cat ${SSH_KEY_NAME}.pub)" --format ID --no-header)
 fi
 echo "✅ SSH key ID: $SSH_KEY_ID"
 
@@ -168,15 +168,15 @@ USERDATA_EOF
 
 # Substitute variables in user data
 sed -i.bak \
-    -e "s/\${AGENT_ID}/$AGENT_ID/g" \
-    -e "s/\${ANTHROPIC_API_KEY}/$ANTHROPIC_API_KEY/g" \
-    -e "s/\${AGENT_NAME}/$AGENT_NAME/g" \
-    -e "s/\${DOMAIN}/$DOMAIN/g" \
-    -e "s/\${SPECIALIZATION}/$SPECIALIZATION/g" \
-    -e "s/\${DESCRIPTION}/$DESCRIPTION/g" \
-    -e "s/\${CAPABILITIES}/$CAPABILITIES/g" \
-    -e "s/\${REGISTRY_URL}/$REGISTRY_URL/g" \
-    -e "s/\${PORT}/$PORT/g" \
+    -e "s|\${AGENT_ID}|$AGENT_ID|g" \
+    -e "s|\${ANTHROPIC_API_KEY}|$ANTHROPIC_API_KEY|g" \
+    -e "s|\${AGENT_NAME}|$AGENT_NAME|g" \
+    -e "s|\${DOMAIN}|$DOMAIN|g" \
+    -e "s|\${SPECIALIZATION}|$SPECIALIZATION|g" \
+    -e "s|\${DESCRIPTION}|$DESCRIPTION|g" \
+    -e "s|\${CAPABILITIES}|$CAPABILITIES|g" \
+    -e "s|\${REGISTRY_URL}|$REGISTRY_URL|g" \
+    -e "s|\${PORT}|$PORT|g" \
     "user_data_${AGENT_ID}_${DEPLOYMENT_ID}.sh"
 
 # Launch droplet

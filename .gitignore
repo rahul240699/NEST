@@ -82,3 +82,10 @@ out.log
 *.tmp
 *.temp
 .cache/
+test*
+AGENTS.md
+.github/
+*key*
+*.pub
+.config/
+user*
