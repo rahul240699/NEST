@@ -1,8 +1,33 @@
 # 🚀 NANDA Agent Deployment Scripts
 
-Production-ready scripts for deploying NANDA agents to AWS EC2.
+Production-ready scripts for deploying NANDA agents to multiple cloud providers.
+
+## ☁️ Supported Cloud Providers
+
+- **AWS EC2** - Amazon Web Services
+- **DigitalOcean** - Simple cloud infrastructure
+- **Azure** - Microsoft Azure Virtual Machines
+- **GCP** - Google Cloud Platform Compute Engine
 
 ## 📋 Available Scripts
+
+### AWS EC2
+- `aws-single-agent-deployment.sh` - Deploy one agent to AWS EC2
+- `aws-multi-agent-deployment.sh` - Deploy multiple agents to one EC2 instance
+
+### DigitalOcean
+- `digitalocean/single-agent-deployment.sh` - Deploy one agent to DigitalOcean
+- `digitalocean/multi-agent-deployment.sh` - Deploy multiple agents to one droplet
+
+See provider-specific READMEs for detailed documentation:
+- [AWS Documentation](./README.md)
+- [DigitalOcean Documentation](./digitalocean/README.md)
+- [Azure Documentation](./azure/README.md)
+- [GCP Documentation](./gcp/README.md)
+
+---
+
+## AWS Quick Start
 
 ### 🤖 Single Agent Deployment
 **`aws-single-agent-deployment.sh`** - Deploy one specialized agent to one EC2 instance
