@@ -18,9 +18,6 @@ Production-ready scripts for deploying NANDA agents to multiple cloud providers.
 ### DigitalOcean
 - `digitalocean/single-agent-deployment.sh` - Deploy one agent to DigitalOcean
 - `digitalocean/multi-agent-deployment.sh` - Deploy multiple agents to one droplet
-
-See provider-specific READMEs for detailed documentation:
-- [AWS Documentation](./README.md)
 - [DigitalOcean Documentation](./digitalocean/README.md)
 - [Azure Documentation](./azure/README.md)
 - [GCP Documentation](./gcp/README.md)

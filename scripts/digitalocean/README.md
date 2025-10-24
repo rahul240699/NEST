@@ -112,50 +112,6 @@ bash scripts/digitalocean/multi-agent-deployment.sh \
 - `DROPLET_SIZE`: Droplet size (default: s-2vcpu-4gb)
 
 
-## DigitalOcean Regions
-
-Common DigitalOcean regions:
-- `nyc1`, `nyc3` - New York
-- `sfo3` - San Francisco
-- `ams3` - Amsterdam
-- `sgp1` - Singapore
-- `lon1` - London
-- `fra1` - Frankfurt
-- `tor1` - Toronto
-- `blr1` - Bangalore
-
-## Droplet Sizes
-
-Common droplet sizes:
-- `s-1vcpu-1gb` - 1 vCPU, 1GB RAM (~$6/month) - Good for 1-2 agents
-- `s-1vcpu-2gb` - 1 vCPU, 2GB RAM (~$12/month) - Good for 2-3 agents
-- `s-2vcpu-2gb` - 2 vCPUs, 2GB RAM (~$18/month) - Good for 3-5 agents
-- `s-2vcpu-4gb` - 2 vCPUs, 4GB RAM (~$24/month) - Good for 5-10 agents
-- `s-4vcpu-8gb` - 4 vCPUs, 8GB RAM (~$48/month) - Good for 10+ agents
-
-## Testing Deployed Agents
-
-### Single Agent Test
-```bash
-curl -X POST http://<PUBLIC_IP>:<PORT>/a2a \
-  -H "Content-Type: application/json" \
-  -d '{"content":{"text":"Hello! What can you help me with?","type":"text"},"role":"user","conversation_id":"test123"}'
-```
-
-### Multi-Agent Test
-```bash
-# Test each agent on its respective port
-for port in 6001 6002 6003; do
-  echo "Testing port $port..."
-  curl -X POST http://<PUBLIC_IP>:$port/a2a \
-    -H "Content-Type: application/json" \
-    -d '{"content":{"text":"Hello!","type":"text"},"role":"user","conversation_id":"test"}'
-  echo ""
-done
-```
-
-
-
 ## Cleanup
 
 ### Delete droplet:
