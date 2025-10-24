@@ -154,37 +154,7 @@ for port in 6001 6002 6003; do
 done
 ```
 
-## SSH Access
 
-```bash
-# Single agent
-ssh -i nanda-agent-key root@<PUBLIC_IP>
-
-# Multi-agent
-ssh -i nanda-multi-agent-key root@<PUBLIC_IP>
-```
-
-## Managing Multi-Agent Deployments
-
-### Check agent status:
-```bash
-ssh -i nanda-multi-agent-key root@<PUBLIC_IP> 'supervisorctl status'
-```
-
-### Restart specific agent:
-```bash
-ssh -i nanda-multi-agent-key root@<PUBLIC_IP> 'supervisorctl restart agent_<AGENT_ID>'
-```
-
-### Restart all agents:
-```bash
-ssh -i nanda-multi-agent-key root@<PUBLIC_IP> 'supervisorctl restart all'
-```
-
-### View agent logs:
-```bash
-ssh -i nanda-multi-agent-key root@<PUBLIC_IP> 'tail -f /var/log/agent_<AGENT_ID>.out.log'
-```
 
 ## Cleanup
 
