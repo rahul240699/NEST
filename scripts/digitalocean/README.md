@@ -111,29 +111,6 @@ bash scripts/digitalocean/multi-agent-deployment.sh \
 - `REGION`: DigitalOcean region (default: nyc1)
 - `DROPLET_SIZE`: Droplet size (default: s-2vcpu-4gb)
 
-**Agent Config JSON Format:**
-```json
-[
-  {
-    "agent_id": "test-agent-1",
-    "agent_name": "Test Agent One",
-    "domain": "general",
-    "specialization": "test-assistant",
-    "description": "A test agent for validation",
-    "capabilities": ["qa", "testing"],
-    "port": 6001
-  },
-  {
-    "agent_id": "test-agent-2",
-    "agent_name": "Test Agent Two",
-    "domain": "general",
-    "specialization": "test-assistant",
-    "description": "Another test agent",
-    "capabilities": ["qa", "testing"],
-    "port": 6002
-  }
-]
-```
 
 ## DigitalOcean Regions
 
