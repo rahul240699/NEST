@@ -114,8 +114,8 @@ bash multi-agent-deployment.sh \
   <AGENT_CONFIG_JSON> \
   [AGENT_REGISTRY_URL] \
   [MCP_REGISTRY_URL] \
-  [LOCATION] \
-  [VM_SIZE]
+  [VM_SIZE] \
+  [LOCATION]
 ```
 
 **Example:**

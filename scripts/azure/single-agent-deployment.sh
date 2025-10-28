@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Parse arguments
-AGENT_ID="$1" # Removed stray 'd'
+AGENT_ID="$1"
 ANTHROPIC_API_KEY="$2"
 AGENT_NAME="$3"
 GIT_BRANCH="${4:-main}"

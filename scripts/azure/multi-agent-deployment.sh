@@ -22,7 +22,7 @@ NC='\033[0m' # No Color
 # Parse arguments
 ANTHROPIC_API_KEY="$1"
 AGENT_CONFIG_JSON="$2"
-LOCATION="${3:-centralindia}"
+LOCATION="${3:-eastus}"
 SMITHERY_API_KEY="${4:-}"
 AGENT_REGISTRY_URL="${5:-http://registry.chat39.com:6900}"
 MCP_REGISTRY_URL="${6:-http://registry.chat39.com:7878}"
@@ -33,7 +33,7 @@ if [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_CONFIG_JSON" ]; then
     echo -e "${RED}ERROR: Usage: $0 <ANTHROPIC_API_KEY> <AGENT_CONFIG_JSON> [LOCATION] [SMITHERY_API_KEY] [AGENT_REGISTRY_URL] [MCP_REGISTRY_URL] [VM_SIZE] [PUBLIC_IP_NAME]${NC}"
     echo ""
     echo "Example:"
-    echo "  $0 sk-ant-xxx scripts/agent_configs/test-3-agents.json centralindia smth-xxx http://registry.chat39.com:6900 http://registry.chat39.com:7878 Standard_B2s"
+    echo "  $0 sk-ant-xxx scripts/agent_configs/test-3-agents.json eastus smth-xxx http://registry.chat39.com:6900 http://registry.chat39.com:7878 Standard_B2s"
     exit 1
 fi
 
