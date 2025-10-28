@@ -14,17 +14,19 @@ DOMAIN="$4"
 SPECIALIZATION="$5"
 DESCRIPTION="$6"
 CAPABILITIES="$7"
-REGISTRY_URL="${8:-}"
-PORT="${9:-6000}"
-REGION="${10:-us-east-1}"
-INSTANCE_TYPE="${11:-t3.micro}"
+SMITHERY_API_KEY="$8"
+REGISTRY_URL="${9:-}"
+MCP_REGISTRY_URL="${10:-}"
+PORT="${11:-6000}"
+REGION="${12:-us-east-1}"
+INSTANCE_TYPE="${13:-t3.micro}"
 
 # Validate inputs
 if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || [ -z "$DOMAIN" ] || [ -z "$SPECIALIZATION" ] || [ -z "$DESCRIPTION" ] || [ -z "$CAPABILITIES" ]; then
-    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE]"
+    echo "❌ Usage: $0 <AGENT_ID> <ANTHROPIC_API_KEY> <AGENT_NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [SMITHERY_API_KEY] [REGISTRY_URL] [MCP_REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE]"
     echo ""
     echo "Example:"
-    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" \"https://registry.example.com\" 6000 us-east-1 t3.micro"
+    echo "  $0 data-scientist sk-ant-xxxxx \"Data Scientist\" \"data analysis\" \"analytical and precise AI assistant\" \"I specialize in data analysis, statistics, and machine learning.\" \"data analysis,statistics,machine learning,Python,R\" smithery-key-xxxxx \"https://registry.example.com\" \"https://d9750825b5c6.ngrok-free.app\" 6000 us-east-1 t3.micro"
     echo ""
     echo "Parameters:"
     echo "  AGENT_ID: Unique identifier for the agent"
@@ -34,7 +36,9 @@ if [ -z "$AGENT_ID" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_NAME" ] || 
     echo "  SPECIALIZATION: Brief description of agent's role"
     echo "  DESCRIPTION: Detailed description of the agent"
     echo "  CAPABILITIES: Comma-separated list of capabilities"
+    echo "  SMITHERY_API_KEY: Optional Smithery API key for MCP server access"
     echo "  REGISTRY_URL: Optional registry URL for agent discovery"
+    echo "  MCP_REGISTRY_URL: Optional MCP registry URL for NANDA MCP servers"
     exit 1
 fi
 
@@ -45,7 +49,9 @@ echo "Agent Name: $AGENT_NAME"
 echo "Domain: $DOMAIN"
 echo "Specialization: $SPECIALIZATION"
 echo "Capabilities: $CAPABILITIES"
+echo "Smithery API Key: ${SMITHERY_API_KEY:+"${SMITHERY_API_KEY:0:10}..."}"
 echo "Registry URL: ${REGISTRY_URL:-"None"}"
+echo "MCP Registry URL: ${MCP_REGISTRY_URL:-"None"}"
 echo "Port: $PORT"
 echo "Region: $REGION"
 echo "Instance Type: $INSTANCE_TYPE"
@@ -166,6 +172,7 @@ sudo -u ubuntu bash -c "
     cd /home/ubuntu/nanda-agent-$AGENT_ID
     source env/bin/activate
     export ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY'
+    export SMITHERY_API_KEY='$SMITHERY_API_KEY'
     export AGENT_ID='$AGENT_ID'
     export AGENT_NAME='$AGENT_NAME'
     export AGENT_DOMAIN='$DOMAIN'
@@ -173,6 +180,7 @@ sudo -u ubuntu bash -c "
     export AGENT_DESCRIPTION='$DESCRIPTION'
     export AGENT_CAPABILITIES='$CAPABILITIES'
     export REGISTRY_URL='$REGISTRY_URL'
+    export MCP_REGISTRY_URL='$MCP_REGISTRY_URL'
     export PUBLIC_URL='http://\$PUBLIC_IP:$PORT'
     export PORT='$PORT'
     nohup python3 examples/nanda_agent.py > agent.log 2>&1 &

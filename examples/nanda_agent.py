@@ -49,6 +49,7 @@ def get_agent_config():
     description = os.getenv("AGENT_DESCRIPTION", "I am a helpful AI assistant specializing in general tasks and Ubuntu system administration.")
     capabilities = os.getenv("AGENT_CAPABILITIES", "general assistance,Ubuntu system administration,Python development,cloud deployment,agent-to-agent communication")
     registry_url = os.getenv("REGISTRY_URL", None)
+    mcp_registry_url = os.getenv("MCP_REGISTRY_URL", None)
     public_url = os.getenv("PUBLIC_URL", None)
     
     # Parse capabilities into a list
@@ -76,6 +77,7 @@ When someone asks about yourself, mention that you're part of the NANDA agent ne
         "description": description,
         "expertise": expertise_list,
         "registry_url": registry_url,
+        "mcp_registry_url": mcp_registry_url,
         "public_url": public_url,
         "system_prompt": system_prompt,
         "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY"),
@@ -203,8 +205,10 @@ def main():
         agent_logic=agent_logic,
         port=PORT,
         registry_url=AGENT_CONFIG["registry_url"],
+        mcp_registry_url=AGENT_CONFIG["mcp_registry_url"],
         public_url=AGENT_CONFIG["public_url"],
-        enable_telemetry=False
+        enable_telemetry=True,
+        smithery_api_key=os.getenv("SMITHERY_API_KEY")
     )
     
     print(f"🚀 Agent URL: http://localhost:{PORT}/a2a")
@@ -262,7 +266,9 @@ When someone asks about yourself, mention that you're part of the NANDA agent ne
         agent_logic=agent_logic,
         port=port,
         registry_url=custom_config["registry_url"],
-        enable_telemetry=False
+        mcp_registry_url=custom_config["mcp_registry_url"],
+        enable_telemetry=True,
+        smithery_api_key=os.getenv("SMITHERY_API_KEY")
     )
     
     print(f"🤖 Starting custom LLM agent: {agent_name}")
