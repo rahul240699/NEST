@@ -85,3 +85,4 @@ out.log
 *.temp
 .cache/
 test*
+*key*
