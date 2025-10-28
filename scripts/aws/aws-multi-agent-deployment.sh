@@ -5,16 +5,20 @@
 
 set -e
 
-# Parse arguments (same as original)
+# Parse arguments
 ANTHROPIC_API_KEY="$1"
 AGENT_CONFIG_JSON="$2"
-REGISTRY_URL="${3:-http://registry.chat39.com:6900}"
-REGION="${4:-us-east-1}"
-INSTANCE_TYPE="${5:-t3.large}"  # Upgraded for 10 agents
+# Optional Smithery API key for MCP access
+SMITHERY_API_KEY="$3"
+REGISTRY_URL="${4:-http://registry.chat39.com:6900}"
+# Optional NANDA MCP registry URL
+MCP_REGISTRY_URL="${5:-}"
+REGION="${6:-us-east-1}"
+INSTANCE_TYPE="${7:-t3.large}"  # Upgraded for 10 agents
 
-# Validation (same as original)
+# Validation
 if [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$AGENT_CONFIG_JSON" ]; then
-    echo "❌ Usage: $0 <ANTHROPIC_API_KEY> <AGENT_CONFIG_JSON> [REGISTRY_URL] [REGION] [INSTANCE_TYPE]"
+    echo "❌ Usage: $0 <ANTHROPIC_API_KEY> <AGENT_CONFIG_JSON> [SMITHERY_API_KEY] [REGISTRY_URL] [MCP_REGISTRY_URL] [REGION] [INSTANCE_TYPE]"
     exit 1
 fi
 
@@ -144,6 +148,9 @@ apt-get install -y python3 python3-venv python3-pip git curl jq supervisor
 cd /home/ubuntu
 sudo -u ubuntu git clone https://github.com/projnanda/NEST.git nanda-multi-agents
 cd nanda-multi-agents
+sudo -u ubuntu git checkout feature/mcp-tooling
+cd ..
+cd nanda-multi-agents
 sudo -u ubuntu python3 -m venv env
 sudo -u ubuntu bash -c "source env/bin/activate && pip install --upgrade pip && pip install -e . && pip install anthropic"
 
@@ -188,6 +195,7 @@ while IFS= read -r agent_config; do
     echo "Configuring supervisor for agent: \$AGENT_ID"
     
     # Create supervisor configuration file
+[...existing code...]
     cat > "/etc/supervisor/conf.d/agent_\$AGENT_ID.conf" << SUPERVISOR_EOF
 [program:agent_\$AGENT_ID]
 command=/home/ubuntu/nanda-multi-agents/env/bin/python examples/nanda_agent.py
@@ -200,6 +208,7 @@ stderr_logfile=/var/log/agent_\$AGENT_ID.err.log
 stdout_logfile=/var/log/agent_\$AGENT_ID.out.log
 environment=
     ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY",
+    SMITHERY_API_KEY="$SMITHERY_API_KEY",
     AGENT_ID="\$AGENT_ID",
     AGENT_NAME="\$AGENT_NAME",
     AGENT_DOMAIN="\$DOMAIN",
@@ -207,6 +216,7 @@ environment=
     AGENT_DESCRIPTION="\$DESCRIPTION",
     AGENT_CAPABILITIES="\$CAPABILITIES",
     REGISTRY_URL="$REGISTRY_URL",
+    MCP_REGISTRY_URL="$MCP_REGISTRY_URL",
     PUBLIC_URL="http://\$PUBLIC_IP:\$PORT",
     PORT="\$PORT"
 

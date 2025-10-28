@@ -26,7 +26,9 @@ bash scripts/aws-single-agent-deployment.sh \
   "specialization" \              # Role description
   "description" \                 # Detailed agent description
   "capabilities" \                # Comma-separated capabilities
-  "registry-url" \                # Registry URL 
+  "smithery-api-key" \            # Smithery API key (optional)
+  "registry-url" \                # Agent registry URL (optional)
+  "mcp-registry-url" \            # MCP registry URL (optional)
   "port" \                        # Port number 
   "region" \                      # AWS region 
   "instance-type"                 # EC2 instance type 
@@ -42,7 +44,9 @@ bash scripts/aws-single-agent-deployment.sh \
   "knowledgeable furniture specialist" \
   "I help with furniture selection and interior design" \
   "furniture,interior design,decor" \
+  "smithery-key-xxxxx" \
   "http://registry.chat39.com:6900" \
+  "https://your-mcp-registry.ngrok-free.app" \
   "6000" \
   "us-east-1" \
   "t3.micro"
@@ -54,7 +58,9 @@ bash scripts/aws-single-agent-deployment.sh \
 bash scripts/aws-multi-agent-deployment.sh \
   "your-api-key" \
   "scripts/agent_configs/group-01-business-and-finance-experts.json" \
+  "smithery-key-xxxxx" \
   "http://registry.chat39.com:6900" \
+  "https://your-mcp-registry.ngrok-free.app" \
   "us-east-1" \
   "t3.xlarge"
 ```
@@ -85,6 +91,8 @@ NEST/
 
 ## Agent Communication
 
+### A2A Communication
+
 Agents can communicate with each other using the `@agent-id` syntax:
 
 ```bash
@@ -100,6 +108,49 @@ curl -X POST http://agent-ip:{PORT}/a2a \
     "conversation_id": "test123"
   }'
 ```
+
+### MCP (Model Context Protocol) Integration
+
+Agents can discover and execute tools from MCP servers using the `#registry:server-name` syntax:
+
+**Smithery MCP Servers:**
+
+```bash
+# Query Smithery registry servers
+curl -X POST http://agent-ip:{PORT}/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": {
+      "text": "#smithery:@{mcp_server_name} get current weather in NYC",
+      "type": "text"
+    },
+    "role": "user",
+    "conversation_id": "mcp-test"
+  }'
+```
+
+**NANDA MCP Servers:**
+
+```bash
+# Query NANDA registry servers
+curl -X POST http://agent-ip:{PORT}/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": {
+      "text": "#nanda:nanda-points get my current points balance",
+      "type": "text"
+    },
+    "role": "user",
+    "conversation_id": "nanda-test"
+  }'
+```
+
+The agent will automatically:
+
+1. Discover the MCP server from the appropriate registry
+2. Connect to the server and get available tools
+3. Use Claude to intelligently select and execute the right tools
+4. Return formatted results
 
 ## Available Agent Groups
 
