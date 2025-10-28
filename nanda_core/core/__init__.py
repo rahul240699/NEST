@@ -3,11 +3,10 @@
 Core components for the Streamlined NANDA Adapter
 """
 
-from .adapter import NANDA, StreamlinedAdapter
+from .adapter import NANDA
 from .agent_bridge import SimpleAgentBridge
 
 __all__ = [
     "NANDA",
-    "StreamlinedAdapter",
     "SimpleAgentBridge"
 ]

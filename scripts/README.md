@@ -35,41 +35,10 @@ bash single-agent-deployment.sh "agent-id" "sk-ant-..." "Agent Name"
 
 ### Azure Deployment
 ```bash
-cd azure
-bash single-agent-deployment.sh "agent-id" "sk-ant-..." "Agent Name"
+bash aws-single-agent-deployment.sh <AGENT_ID> <API_KEY> <NAME> <DOMAIN> <SPECIALIZATION> <DESCRIPTION> <CAPABILITIES> [SMITHERY_API_KEY] [REGISTRY_URL] [MCP_REGISTRY_URL] [PORT] [REGION] [INSTANCE_TYPE]
 ```
 
-## 📋 Cloud-Specific Features
-
-### AWS (`aws/`)
-- ✅ EC2 instance deployment
-- ✅ Security groups auto-configuration
-- ✅ IMDSv2 for metadata retrieval
-- ✅ Supervisor-based multi-agent management
-- ✅ Automatic key pair generation
-
-### GCP (`gcp/`)
-- ✅ Compute Engine deployment
-- ✅ Firewall rules auto-configuration
-- ✅ Metadata service integration
-- ✅ Supervisor-based multi-agent management
-- ✅ SSH key management
-
-### Azure (`azure/`)
-- ✅ Virtual Machine deployment
-- ✅ Network Security Groups (NSG)
-- ✅ Virtual network auto-setup
-- ✅ Cloud-init configuration
-- ✅ Systemd/supervisor service management
-
----
-
-## 📋 Script Types (Available on All Platforms)
-
-### 🤖 Single Agent Deployment
-Deploy one specialized agent to one VM/instance
-
-**Example (AWS):**
+**Example:**
 ```bash
 cd aws
 bash single-agent-deployment.sh \
@@ -79,50 +48,14 @@ bash single-agent-deployment.sh \
   "main" \
   "data analysis" \
   "expert data analyst and machine learning specialist" \
-  "python,statistics,machine learning" \
-  "" \
+  "I help with statistical analysis, machine learning, and data visualization" \
+  "python,statistics,machine learning,data visualization" \
+  "smithery-key-xxxxx" \
   "http://registry.chat39.com:6900" \
-  "" \
-  6000 \
-  us-east-1 \
-  t3.micro
-```
-
-**Example (GCP):**
-```bash
-cd gcp
-bash single-agent-deployment.sh \
-  "data-scientist" \
-  "sk-ant-api03-..." \
-  "Data Scientist" \
-  "main" \
-  "data analysis" \
-  "expert data analyst" \
-  "python,statistics" \
-  "" \
-  "http://registry.chat39.com:6900" \
-  "" \
-  6000 \
-  us-central1-a \
-  e2-micro
-```
-
-**Example (Azure):**
-```bash
-cd azure
-bash single-agent-deployment.sh \
-  "data-scientist" \
-  "sk-ant-api03-..." \
-  "Data Scientist" \
-  "main" \
-  "data analysis" \
-  "python,statistics" \
-  "" \
-  "http://registry.chat39.com:6900" \
-  "" \
-  6000 \
-  eastus \
-  Standard_B1s
+  "https://your-mcp-registry.ngrok-free.app" \
+  "6000" \
+  "us-east-1" \
+  "t3.micro"
 ```
 
 ### 🏭 Multi-Agent Deployment  
@@ -141,15 +74,7 @@ bash multi-agent-deployment.sh \
 
 **Example (GCP):**
 ```bash
-cd gcp
-bash multi-agent-deployment.sh \
-  "sk-ant-api03-..." \
-  "../agent_configs/group-01-business-and-finance-experts.json" \
-  "" \
-  "http://registry.chat39.com:6900" \
-  "" \
-  "us-central1-a" \
-  "e2-standard-4"
+bash aws-multi-agent-deployment.sh <API_KEY> <CONFIG_JSON> [SMITHERY_API_KEY] [REGISTRY_URL] [MCP_REGISTRY_URL] [REGION] [INSTANCE_TYPE]
 ```
 
 **Example (Azure):**
@@ -157,11 +82,12 @@ bash multi-agent-deployment.sh \
 cd azure
 bash multi-agent-deployment.sh \
   "sk-ant-api03-..." \
-  "../agent_configs/group-01-business-and-finance-experts.json" \
+  "agent_configs/group-01-business-and-finance-experts.json" \
+  "smithery-key-xxxxx" \
   "http://registry.chat39.com:6900" \
-  "" \
-  "eastus" \
-  "Standard_B4ms"
+  "https://your-mcp-registry.ngrok-free.app" \
+  "us-east-1" \
+  "t3.xlarge"
 ```
 
 ### 🌍 Multi-Region Deployment

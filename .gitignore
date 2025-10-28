@@ -27,6 +27,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+AGENTS.md
 
 # Environment variables
 .env
@@ -42,8 +43,12 @@ telemetry_logs/
 test_logs/
 *.jsonl
 
+# Local development
+# nanda_mcp_registry/
+
 # IDE
 .vscode/
+.github/
 .idea/
 *.swp
 *.swo
@@ -84,5 +89,7 @@ out.log
 *.tmp
 *.temp
 .cache/
+
 test*
+
 *key*
